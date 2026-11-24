@@ -44,7 +44,7 @@ export function createHandler({ provider, send, now = Date.now, onError = () => 
         const quote = await provider.lookup(symbol);
         if (!quote) continue;
         const card = buildCard(quote, now());
-        await send({ channel: event.channel, thread_ts: /^\d+\.\d+$/.test(event.thread_ts ?? '') ? event.thread_ts : event.ts, symbol, card, png: chartPng(quote.history) });
+        await send({ channel: event.channel, thread_ts: /^\d+\.\d+$/.test(event.thread_ts ?? '') ? event.thread_ts : event.ts, symbol, card, png: chartPng(quote.history,640,320,quote) });
         delivered.set(symbolKey, now() + 10 * 60_000);
       }
       delivered.set(key, now() + 10 * 60_000);

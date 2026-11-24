@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { inflateSync } from 'node:zlib';
 import { extractTickers, buildCard, createHandler } from '../src/bot.js';
 import { FixtureProvider, validateQuote } from '../src/provider.js';
-import { chartPng } from '../src/chart.js';
+import { chartPng, chartLabels } from '../src/chart.js';
 const provider = new FixtureProvider();
 const event = { channel: 'C123', ts: '123.456', text: '$AAPL $SPY' };
 
@@ -31,9 +31,10 @@ test('chart is valid bounded PNG with nonempty plotted pixels, handles flat hist
     const png = chartPng(history);
     assert.equal(png.subarray(0, 8).toString('hex'), '89504e470d0a1a0a');
     assert.equal(png.readUInt32BE(16), 640);
-    const size = png.readUInt32BE(33);
-    const pixels = inflateSync(png.subarray(41, 41 + size));
-    assert.equal(pixels.length, 240 * (640 * 3 + 1));
+    let at=8,compressed;
+    while(at<png.length){const size=png.readUInt32BE(at),type=png.toString('ascii',at+4,at+8);if(type==='IDAT')compressed=png.subarray(at+8,at+8+size);at+=size+12;}
+    const pixels = inflateSync(compressed);
+    assert.equal(pixels.length, 320 * (640 * 3 + 1));
     assert.ok(pixels.includes(111));
   }
 });
@@ -79,4 +80,10 @@ test('partial batch retry does not repost already delivered symbols', async () =
 
 test('sentence punctuation does not swallow cashtags', () => {
   assert.deepEqual(extractTickers('price $AAPL. and $SPY- next $BRK.B. $NOKIA.HE!'), ['AAPL','SPY','BRK.B']);
+});
+
+test('chart labels include symbol, DEMO, currency, dates and last high low', async()=>{
+ const q=await provider.lookup('AAPL');const labels=chartLabels(q.history,q).join(' ');
+ for(const word of ['AAPL','DEMO FIXTURE','CLOSE / USD','2026-01-01','2026-01-30','DATE','LAST','HIGH','LOW'])assert.ok(labels.includes(word),word);
+ const png=chartPng(q.history,640,320,q);assert.ok(png.includes(Buffer.from('AAPL - DEMO FIXTURE')));
 });

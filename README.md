@@ -15,8 +15,9 @@ npm run demo
 
 The demo writes `demo-output/card.json` and `demo-output/AAPL.png` locally.
 The card labels the data DEMO and includes source, timestamp, history dates and
-close range. The PNG is an equally spaced line of closes, with its date/range
-context in the card, not a time-axis financial chart. Fixtures include AAPL,
+close range. The PNG has a DEMO title, close/currency axis and tick values, date ticks,
+and last/high/low markers. Observations are equally spaced, not a time-scale
+financial chart. Fixtures include AAPL,
 SPY and NOKIA.HE. These numbers are invented, not investment information.
 
 ## Slack adapter, not deployed
