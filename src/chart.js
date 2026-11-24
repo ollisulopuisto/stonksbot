@@ -15,13 +15,22 @@ function chunk(name, data) {
   const crc = Buffer.alloc(4); crc.writeUInt32BE(crc32(Buffer.concat([type, data])));
   return Buffer.concat([length, type, data, crc]);
 }
+export function chartScale(points) {
+  const values = points.map(p => p.close);
+  const low = Math.min(...values), high = Math.max(...values);
+  const padding = Math.max(high * 0.01, 0.5);
+  const minimum = low === high ? Math.max(0, low - padding) : low;
+  const maximum = low === high ? high + padding : high;
+  return { low, high, minimum, maximum,
+    ticks: Array.from({ length: 5 }, (_, i) => maximum - (maximum - minimum) * i / 4) };
+}
 // Small local PNG renderer. No chart host or user message leaves this process.
 export function chartLabels(points, {symbol='FIXTURE',currency='USD',fixture=true}={}) {
-  const values=points.map(p=>p.close), low=Math.min(...values), high=Math.max(...values);
+  const values=points.map(p=>p.close), { low, high, ticks } = chartScale(points);
   return [`${symbol} - ${fixture?'DEMO FIXTURE':'PROVIDER DATA'}`,`CLOSE / ${currency}`,
-    ...Array.from({length:5},(_,i)=>`${(high-(high-low)*i/4).toFixed(2)} ${currency}`),
+    ...ticks.map(value=>`${value.toFixed(2)} ${currency}`),
     ...[points[0],points[Math.floor((points.length-1)/2)],points.at(-1)].map(p=>p.date.slice(0,10)),
-    'DATE',`LAST ${values.at(-1).toFixed(2)} ${currency}`,`HIGH ${high.toFixed(2)} ${currency}`,`LOW ${low.toFixed(2)} ${currency}`];
+    'DATE',`LAST CLOSE ${values.at(-1).toFixed(2)} ${currency}`,`HIGH ${high.toFixed(2)} ${currency}`,`LOW ${low.toFixed(2)} ${currency}`];
 }
 export function chartPng(points, width = 640, height = 320, metadata = {}) {
   if (!Number.isInteger(width) || !Number.isInteger(height) || width < 100 || width > 1600 || height < 80 || height > 1000) throw new Error('Invalid chart dimensions');
@@ -41,19 +50,18 @@ export function chartPng(points, width = 640, height = 320, metadata = {}) {
       pixel(x, y, rgb); pixel(x, y + 1, rgb);
     }
   };
-  const values = points.map(p => p.close), low = Math.min(...values), high = Math.max(...values);
-  const span = high - low || Math.max(high * 0.02, 1);
+  const values = points.map(p => p.close), { low, high, minimum, maximum } = chartScale(points);
   const labels=chartLabels(points,metadata);
   const left=105,right=width-25,top=68,bottom=height-83;
   drawText(pixel,labels[0],20,14,2);
   drawText(pixel,labels[1],20,43);
-  const valueSpan=high-low||span;
+  const valueSpan=maximum-minimum;
   for(let i=0;i<5;i++){
     const y=top+(bottom-top)*i/4;
     line(left,y,right,y,[225,231,237]);
-    drawText(pixel,`${(high-valueSpan*i/4).toFixed(2)} ${metadata.currency??'USD'}`,8,y-3);
+    drawText(pixel,labels[2+i],8,y-3);
   }
-  const coords=points.map((p,i)=>[left+i*(right-left)/(points.length-1),bottom-(p.close-(high-valueSpan))/valueSpan*(bottom-top)]);
+  const coords=points.map((p,i)=>[left+i*(right-left)/(points.length-1),bottom-(p.close-minimum)/valueSpan*(bottom-top)]);
   for(let i=1;i<coords.length;i++)line(...coords[i-1],...coords[i],[0,111,145]);
   for(const index of [0,Math.floor((points.length-1)/2),points.length-1]){
     const x=coords[index][0];line(x,bottom,x,bottom+5,[90,100,110]);

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { inflateSync } from 'node:zlib';
 import { extractTickers, buildCard, createHandler } from '../src/bot.js';
 import { FixtureProvider, validateQuote } from '../src/provider.js';
-import { chartPng, chartLabels } from '../src/chart.js';
+import { chartPng, chartLabels, chartScale } from '../src/chart.js';
 const provider = new FixtureProvider();
 const event = { channel: 'C123', ts: '123.456', text: '$AAPL $SPY' };
 
@@ -86,4 +86,26 @@ test('chart labels include symbol, DEMO, currency, dates and last high low', asy
  const q=await provider.lookup('AAPL');const labels=chartLabels(q.history,q).join(' ');
  for(const word of ['AAPL','DEMO FIXTURE','CLOSE / USD','2026-01-01','2026-01-30','DATE','LAST','HIGH','LOW'])assert.ok(labels.includes(word),word);
  const png=chartPng(q.history,640,320,q);assert.ok(png.includes(Buffer.from('AAPL - DEMO FIXTURE')));
+});
+
+
+test('flat history uses the same padded scale for labels and plot', () => {
+ for (const close of [0, 100]) {
+  const points = [{ date:'2026-01-01', close }, { date:'2026-01-02', close }];
+  const scale = chartScale(points), labels = chartLabels(points, {currency:'EUR'});
+  assert.ok(scale.maximum > scale.minimum);
+  assert.ok(scale.minimum >= 0);
+  assert.ok(scale.minimum <= close && close <= scale.maximum);
+  assert.deepEqual(labels.slice(2,7), scale.ticks.map(value => `${value.toFixed(2)} EUR`));
+  assert.equal(new Set(labels.slice(2,7)).size, 5);
+  assert.ok(labels.includes(`LAST CLOSE ${close.toFixed(2)} EUR`));
+  const png = chartPng(points,640,320,{currency:'EUR'});
+  for(const label of labels.slice(2,7))assert.ok(png.includes(Buffer.from(label)));
+  let at=8,compressed;
+  while(at<png.length){const size=png.readUInt32BE(at),type=png.toString('ascii',at+4,at+8);if(type==='IDAT')compressed=png.subarray(at+8,at+8+size);at+=size+12;}
+  const pixels=inflateSync(compressed);
+  const y=Math.round(237-(close-scale.minimum)/(scale.maximum-scale.minimum)*169);
+  const index=y*(640*3+1)+1+350*3;
+  assert.deepEqual([...pixels.subarray(index,index+3)],[0,111,145]);
+ }
 });
