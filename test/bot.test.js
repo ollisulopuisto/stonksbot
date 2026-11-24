@@ -76,3 +76,7 @@ test('partial batch retry does not repost already delivered symbols', async () =
   assert.deepEqual(sent, ['AAPL', 'SPY']);
   assert.throws(() => chartPng([{close:1},{close:2}], 100000, 100000));
 });
+
+test('sentence punctuation does not swallow cashtags', () => {
+  assert.deepEqual(extractTickers('price $AAPL. and $SPY- next $BRK.B. $NOKIA.HE!'), ['AAPL','SPY','BRK.B']);
+});

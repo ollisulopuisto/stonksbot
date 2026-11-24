@@ -4,7 +4,7 @@ import { validateQuote } from './provider.js';
 export function extractTickers(text = '') {
   // Cashtags avoid common English words such as IT, ON and A.
   const plain = text.replace(/```[\s\S]*?```|`[^`]*`|<[^>]*>|https?:\/\/\S+/g, ' ');
-  return [...new Set([...plain.matchAll(/(?:^|[^\w$])\$([A-Za-z][A-Za-z0-9]{0,9}(?:[.-][A-Za-z0-9]{1,5})?)(?![\w.-])/g)].map(m => m[1].toUpperCase()))].slice(0, 3);
+  return [...new Set([...plain.matchAll(/(?:^|[^\w$])\$([A-Za-z][A-Za-z0-9]{0,9}(?:[.-][A-Za-z0-9]{1,5})?)(?!\w)/g)].map(m => m[1].toUpperCase()))].slice(0, 3);
 }
 const safe = text => String(text).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]).slice(0, 200);
 export function buildCard(quote, now = Date.now()) {
