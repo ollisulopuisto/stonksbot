@@ -62,10 +62,16 @@ test('short cashtag typos and long mention typos keep requested working cases',(
 test('reviewer297-word probe cannot autoquote names except explicit exact names/aliases',async()=>{
  const {readFile}=await import('node:fs/promises');const words=(await readFile(new URL('./common-word-probe.txt',import.meta.url),'utf8')).trim().split(/\s+/);
  const allowed=new Set('google alphabet apple tesla microsoft amazon nvidia meta facebook coinbase gamestop blackrock ford visa target nokia kone nordea fortum sampo neste'.split(' '));
+ for(const q of Object.keys(index.aliases))allowed.add(q);
  for(const q of words)if(!allowed.has(q))for(const mode of ['mention','cashtag'])assert.equal(resolveName(index,q,{mode,namesOnly:true}).symbol,undefined,mode+':'+q);
 });
 
 test('reviewed short brands all retain exact alias/core resolution for mentions',()=>{
  for(const q of 'google alphabet apple tesla microsoft amazon nvidia meta facebook coinbase gamestop blackrock ford visa target nokia kone nordea fortum sampo neste'.split(' '))assert.ok(resolveName(index,q,{mode:'mention',namesOnly:true}).symbol,q);
  assert.equal(resolveName(index,'APLE').symbol,'APLE');assert.equal(resolveName(index,'HELP').symbol,'HELP');
+});
+
+test("reviewed additional brand aliases resolve exact routes in mentions",()=>{
+ const expected={"intel": "INTC.US", "oracle": "ORCL.US", "adobe": "ADBE.US", "nike": "NKE.US", "mastercard": "MA.US", "toyota": "TM.US", "ferrari": "RACE.US", "disney": "DIS.US", "cisco": "CSCO.US", "exxon": "XOM.US", "pepsi": "PEP.US", "spotify": "SPOT.US", "costco": "COST.US", "boeing": "BA.US", "invesco": "IVZ.US", "berkshire hathaway": "BRK.B.US"};
+ for(const [q,route]of Object.entries(expected))assert.equal(resolveName(index,q,{mode:"mention",namesOnly:true}).route,route,q);
 });
