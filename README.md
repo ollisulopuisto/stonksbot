@@ -556,3 +556,50 @@ npm test
 Review diff/new/delisted symbols and overlap list, verify special suffixes with
 provider metadata, submit PR. Source NDA_FI normalizes to NDA-FI; full names are
 as supplied by the dataset, not typed from memory. No automatic network refresh.
+
+## Offline company-name lookup
+
+`how is $apple doing` resolves to Apple ($AAPL); `@stonksbot apple` also works
+when Slack delivers a real app_mention event. Ordinary untagged company names
+never trigger replies. The literal typed string @stonksbot isn't authenticated
+as a mention, Slack must send `<@BOT_ID>`. Existing channel allowlist, bot/edit
+suppression and10min message dedup apply, including duplicate message/app_mention
+events. Reactions only for one resolved instrument and no unresolved suggestions.
+
+US names are bundled from official Nasdaq nasdaqtraded.txt directory snapshot
+November27,2026 21:34, retrieved November28:12762non-test listings with supported
+US-style symbols. Helsinki uses the174entry CC0 September20,2025table and local
+overrides above. Index loaded at startup, no name API calls/quota for matching.
+Actual quote/name/history provider requests still use existing budgets. Names
+shown are source full names, e.g. Apple Inc. - Common Stock ($AAPL), not invented
+short labels. Exact ticker identities win before name search. Explicit .HE/.US
+routes bypass fuzzy matching; US-only providers accept the explicit .US route.
+
+Matching: lowercase/diacritic/punctuation normalization, strip company suffixes
+for comparison only; display full source name. Exact normalized name scores1,
+whole-word prefix0.8, otherwise normalized Levenshtein similarity. Minimum0.8
+(query>=4characters),0.95for3characters, and top-two gap>=0.12. Inputs<3or>80chars
+never auto-match. Close/low scores yield short Did you mean suggestions (up to3)
+or No confident match, no quote/reaction. Short typo appl is deliberately a
+suggestion, not guessed Apple. Generic bank is ambiguous. Same ticker across
+markets follows the existing table collision policy. Snapshot can age, cannot
+promise all new instruments, ETF naming families often need explicit tickers.
+Current cashtag parser supports single-token names up to10chars; mention form
+accepts multiword names. No language-model/web/API fuzzy search.
+
+Slack setup: add bot OAuth scope app_mentions:read and subscribe bot event
+app_mention, reinstall app after scopes change. Existing message.channels/groups
+subscriptions still handle cashtags, reactions:write for over/back, no new
+reaction subscription. App must see the allowed channel; no channel discovery.
+
+Refresh US index offline after reviewing a new official directory download:
+https://www.nasdaqtrader.com/dynamic/SymDir/nasdaqtraded.txt
+
+```text
+python3 scripts/refresh-us-names.py --input /path/nasdaqtraded.txt --source-date YYYY-MM-DD --retrieved YYYY-MM-DD
+npm test
+```
+
+Review diff/date/count, rebuild Helsinki collision snapshot if relevant, submit
+PR. US data bundled as factual instrument identifiers/names, not price data.
+No real API keys, live provider quote, Slack app event/install or deploy tested.

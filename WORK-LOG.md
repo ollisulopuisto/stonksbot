@@ -295,3 +295,22 @@ recovering-provider test, then15min cooldown for thrown failures vs24h clean nul
 Corrupt/future/old-schema miss entries discarded and persisted clean on next
 lookup, never touch provider quota state. Tests for corrupt/future JSON and
 recovery after15min pass. No merge, owner yes still required.
+
+## 2026-11-28, offline reverse company-name lookup
+
+Owner requested fuzzy name -> ticker via cashtags and app mention. Checked current
+main bde5b56/open PRs, no overlap. Official Nasdaq US directory snapshot2026-11-27
+21:34contains12762supported non-test symbols/names, extracted programmatically.
+Combined with dated174HE table/overrides, no runtime metadata calls for resolution.
+Exact tickers win, conservative threshold/top-two gap avoids close-match guessing,
+full matched name visible, suggestions have no quote/reaction. New tests failed
+without module first, now cover Apple/Marimekko, generic/tie/typo confidence, actual
+handler mention/cashtag, no unmentioned prose, bot messages and event dedup.
+
+Own adversarial review traced source index/normalization -> exact-ticker priority
+-> ranked candidates -> route/source name -> quote/card/mood/reaction. Explicit
+.US accepted by direct Finnhub/Alpha paths as well as Helsinki router. Only real
+app_mention event enables mention parsing, channel gate retained. No bare prose
+trigger, no bot/edit loop, one instrument+no suggestions required for reaction.
+No account/key/API quotes, Slack scope mutation/install or deployment.130tests,
+audit0/demo/diff pass, exact-head CI/reviewer required; NO MERGE until new user yes.

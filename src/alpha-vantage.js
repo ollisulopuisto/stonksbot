@@ -19,6 +19,7 @@ export class AlphaVantageProvider {
     this.queue = Promise.resolve();
   }
   lookup(symbol) {
+    if(typeof symbol==='string'&&symbol.endsWith('.US'))symbol=symbol.slice(0,-3);
     if (!tickerCurrency(this.currencies, symbol)) return Promise.resolve(null);
     const result = this.queue.then(() => this.lookupLocked(symbol));
     this.queue = result.catch(() => {});
