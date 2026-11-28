@@ -7,11 +7,11 @@ export class QuoteWithDailyHistory {
     this.quoteProvider = quoteProvider;
     this.historyProvider = historyProvider;
   }
-  async lookup(symbol) {
-    const quote = await this.quoteProvider.lookup(symbol);
+  async lookup(symbol,options) {
+    const quote = await this.quoteProvider.lookup(symbol,options);
     if (!quote) return null;
     try {
-      const daily = await this.historyProvider.lookup(symbol);
+      const daily = await this.historyProvider.lookup(symbol,options);
       if (!daily || daily.fixture !== false || daily.priceKind !== 'daily-close' ||
           daily.symbol !== quote.symbol || daily.currency !== quote.currency) throw Error('History identity mismatch');
       validateQuote(daily);

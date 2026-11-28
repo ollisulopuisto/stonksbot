@@ -1,3 +1,4 @@
+import { requestedRange,chartForRange } from './chart-ranges.js';
 import { resolveName } from './name-lookup.js';
 import { helsinkiRegularSession } from './helsinki-session.js';
 import { chartPng } from './chart.js';
@@ -56,13 +57,14 @@ export function createHandler({ provider, send, now = Date.now, onError = () => 
   let active = 0;
   return async event => {
     if (!event || event.bot_id || event.subtype || !/^[A-Z0-9]+$/.test(event.channel ?? '') || !/^\d+\.\d+$/.test(event.ts ?? '')) return;
+    const range=requestedRange(event.text);
     let symbols = extractTickers(event.text);
     const questions = new Set(moodQuestionTickers(event.text));
     const matchedNames=new Map();
     const notices=[];
     if(nameIndex){
       const cashtag=!!symbols.length;
-      const queries=symbols.length?symbols:(event.type==='app_mention'&&/<@[A-Z0-9]+>/.test(event.text??'')?[plainMessage(event.text).trim()]:[]);
+      const queries=symbols.length?symbols:(event.type==='app_mention'&&/<@[A-Z0-9]+>/.test(event.text??'')?[plainMessage(event.text).replace(/\s+(7d|30d|3m|1y)[?.!]?\s*$/i,'').trim()]:[]);
       symbols=[];
       for(const query of queries){
         if(/\.(HE|US)$/.test(query)){symbols.push(query);continue;}
@@ -91,7 +93,7 @@ export function createHandler({ provider, send, now = Date.now, onError = () => 
       for (const symbol of symbols) {
         const symbolKey = `${key}:${symbol}`;
         if (delivered.has(symbolKey)) continue;
-        let quote = await provider.lookup(symbol);
+        let quote = await provider.lookup(symbol,{range});
         if(quote&&matchedNames.has(symbol))quote={...quote,name:matchedNames.get(symbol)};
         if (!quote) continue;
         if(quote.resolutionNotice){
@@ -108,7 +110,9 @@ export function createHandler({ provider, send, now = Date.now, onError = () => 
           catch { onError(Error('Slack reaction failed; card posting continues.')); }
         }
         const card = buildCard(quote, now(), mood, questions.has(symbol));
-        await send({ channel: event.channel, ...(replyMode === 'thread' ? { thread_ts: /^\d+\.\d+$/.test(event.thread_ts ?? '') ? event.thread_ts : event.ts } : {}), symbol, card, chartTitle: quote.historyKind === 'daily-close' ? `${symbol} ${quote.priceKind === 'delayed-quote' ? 'EODHD' : 'Alpha Vantage'} daily closes, not live${quote.priceKind === 'us-quote' ? '; quote: Finnhub' : ''}` : quote.fixture ? `${symbol} DEMO fixture history` : `${symbol} daily close history`, png: quote.history.length >= 2 ? chartPng(quote.history,640,320,{ ...quote, historyKind: quote.historyKind }) : null });
+        const chart=chartForRange(quote,range,now());
+        if(chart.notice){card.text+=' · '+chart.notice;card.blocks.push({type:'context',elements:[{type:'plain_text',text:chart.notice}]});}
+        await send({ channel: event.channel, ...(replyMode === 'thread' ? { thread_ts: /^\d+\.\d+$/.test(event.thread_ts ?? '') ? event.thread_ts : event.ts } : {}), symbol, card, chartTitle: range+' · '+(quote.historyKind === 'daily-close' ? `${symbol} ${quote.priceKind === 'delayed-quote' ? 'EODHD' : 'Alpha Vantage'} daily closes, not live${quote.priceKind === 'us-quote' ? '; quote: Finnhub' : ''}` : quote.fixture ? `${symbol} DEMO fixture history` : `${symbol} daily close history`), png: chart.points.length >= 2 ? chartPng(chart.points,640,320,{ ...quote, range, historyKind: quote.historyKind }) : null });
         delivered.set(symbolKey, now() + 10 * 60_000);
       }
       delivered.set(key, now() + 10 * 60_000);

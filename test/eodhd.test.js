@@ -119,3 +119,10 @@ test('nineteen-day-old closed cache stays quota-free but visibly OLD DATA',async
  const cached=await s.provider.lookup('NOKIA.HE');assert.equal(s.calls.length,4);assert.equal(cached.asOf,q.asOf);
  assert.match(buildCard(cached,s.clock()).text,/OLD DATA/);
 });
+
+test('EODHD range caches isolated and every wider-range history call counts',async t=>{
+ const s=await setup(t);await s.provider.lookup('NOKIA.HE',{range:'30d'});assert.equal(s.calls.length,4);
+ await s.provider.lookup('NOKIA.HE',{range:'1y'});assert.equal(s.calls.length,5);assert.equal(s.calls.at(-1).searchParams.get('from'),'2025-11-27');
+ await new EodhdProvider(s.args).lookup('NOKIA.HE',{range:'30d'});assert.equal(s.calls.length,5);
+ await new EodhdProvider(s.args).lookup('NOKIA.HE',{range:'1y'});assert.equal(s.calls.length,5);
+});
