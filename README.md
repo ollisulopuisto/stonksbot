@@ -29,7 +29,9 @@ live posting are separate steps, not performed by this PR. Use a bot app with
 Socket Mode and a connections:write app token. Bot scopes: chat:write,
 files:write and channels:history; add groups:history only if private channels
 are intended. Subscribe to message.channels, and message.groups only as needed.
-Invite it only to intended channels.
+Join only intended channels. At startup the bot attempts conversations.join for
+configured C-prefixed channel IDs, using the channels:join bot scope. It does not
+discover or join other channels. Private channels still require an invitation.
 
 Both public and private channels are supported. Set SLACK_BOT_TOKEN,
 SLACK_APP_TOKEN and an explicit comma-separated
@@ -100,7 +102,12 @@ Delete stored data if your data subscription ends, as Finnhub's terms require.
    `connections:write`. Bot scopes: `chat:write` and `groups:history` for a private
    channel, plus `files:write` for the Alpha Vantage chart uploads configured below.
    Subscribe to `message.groups`, install/reinstall, invite bot to the channel.
-   Public channels are supported too: use `channels:history` / `message.channels` instead, but do not
+   Public channels are supported too: add `channels:join`, use
+   `channels:history` / `message.channels`, reinstall the app after scope changes,
+   and set their IDs in SLACK_CHANNEL_IDS. Startup joins those public channels
+   automatically; an existing membership is harmless. Join failure logs only
+   the channel ID and setup guidance, continues other joins and event handling,
+   and does not retry. You can invite the bot manually instead. Do not
    enable shared Finnhub posting without written approval.
 2. Get your own Finnhub free API key. Official pricing lists 60 API calls/minute;
    docs add a 30 calls/second cap. `/quote` supports real-time US stocks. This bot
@@ -192,8 +199,9 @@ series for the same personal viewer does not waive either provider's conditions.
 A public channel is supported if the workspace/channel remains visible only
 to you. Public versus private is a Slack setting, not permission to share data.
 Keep channels:history and message.channels enabled for public channel messages,
-groups:history and message.groups for private ones, and invite the bot to each
-SLACK_CHANNEL_IDS channel. There is no private-only filter in code. No channel
+groups:history and message.groups for private ones, and configure each public channel ID in SLACK_CHANNEL_IDS. Add channels:join
+and reinstall for automatic startup join, or invite manually. Private channels
+still need a manual invitation. There is no private-only filter in code. No channel
 shared with other people and no Peliteoria use. US symbols only; Nasdaq Helsinki
 coverage is not verified and US ADRs must not be treated as Helsinki listings.
 
@@ -258,22 +266,57 @@ questions currently receive the same English meme labels, not a translated
 investment claim. "Pohjalla" is treated as a mood question, not a price-bottom
 forecast.
 
-Recognized forms (case-insensitive; optional punctuation; any valid cashtag):
+Accepted whole-question patterns (case-insensitive; `$X` means any supported
+cashtag, including share classes):
 
-- `is $NVDA over or back`, `is $NVDA back or over`
-- `is $NVDA back`, `is $NVDA back yet`, `is $NVDA over`, `is $NVDA done`
-- `onko $NVDA over vai back`, `onko $NVDA back vai over`
-- `onko $NVDA over`, `onko $NVDA back`
-- `onko $NVDA takaisin`, `onko $NVDA palannut`, `joko $NVDA on takaisin`
-- `onko $NVDA pohjalla`, `onko $NVDA ohi`
-- `onko $NVDA nousussa`, `onko $NVDA laskussa`
+- English state: `[is] $X [is] [still|already] STATE [TIME]`.
+  STATE is `over or back`, `back or over`, `back`, `over`, or `done`.
+  TIME is `yet`, `now`, `already`, `today`, `again`, or `right now`.
+  Examples: `is $NVDA over now?`, `$NVDA over or back?`, `$NVDA is back again?`.
+- English mood: `what's the mood on $X`, `what is the mood for $X`
+  (`on` and `for` work with either opening); `how is $X` or `how's $X`.
+  Optional final `doing`, `looking`, `today`, or `now` applies to these forms.
+- Finnish state: `[onko|joko] $X [on] [jo|vielä|nyt|taas] STATE [TIME]`.
+  An alternative order is `$X [onko|joko] [jo|vielä|nyt|taas] STATE [TIME]`.
+  STATE is `over vai back`, `back vai over`, `over`, `back`, `takaisin`,
+  `palannut`, `pohjalla`, `ohi`, `nousussa`, `laskussa`, or `[vielä] pelissä`.
+  TIME is `jo`, `vielä`, `nyt`, `taas`, or `tänään`.
+  Examples: `onko $NVDA vielä pelissä?`, `joko $NVDA on takaisin?`,
+  `$NVDA onko nyt nousussa?`.
+- Finnish mood: `miltä $X näyttää [nyt|tänään]`,
+  `miten $X menee [nyt|tänään]`, `miten $X voi [nyt|tänään]`,
+  `mikä [on] $X[:n] fiilis [nyt|tänään]`,
+  `mikä [on] $X[:n] tilanne [nyt|tänään]`.
+  Examples: `miltä $NVDA näyttää?`, `mikä on $NVDA:n tilanne nyt?`.
 
-Finnish forms also accept optional `on` after the ticker. These are bounded
-patterns, not general language understanding. Bare ticker names without `$` are
-not commands. Code blocks, inline code, links and URLs are ignored as before.
-Other cashtags still get the regular price card, even in an unrecognized question.
+Square brackets above are optional slots, `|` means one alternative, not literal
+input. One optional greeting/filler `hey`, `please`, `hei`, `no` or `noh` can
+precede the question, and final `please` or `kiitos` can follow, separated by a
+space or comma. The recognized phrase must then end the question, with optional
+punctuation/whitespace. `?`, `!`, semicolon, newline and a period followed by
+whitespace/end separate questions; periods inside `BRK.B` are preserved.
+
+Price or other continuations do not match: `is $NVDA over 100?`,
+`is $AAPL back at 200 yet?`, `is $TSLA done reporting?`,
+`onko $NVDA ohi 100 dollarin?`, `is $NVDA back to normal?`,
+`is $NVDA over-valued?`. They keep normal cards. Each question is checked as a
+whole so unrelated prose cannot make a partial phrase trigger.
+
+These are deterministic patterns, not general language understanding or LLM
+calls. Bare ticker names without `$` are not commands. Code blocks, inline code,
+links and URLs are ignored as before. Other cashtags still get the regular card,
+even in an unrecognized question. No extra provider requests.
 Up to three symbols per message, the same channel/ticker restrictions, source
 rights, provider quotas, freshness rules, threading and retry caveats apply.
 Unsupported/provider-rejected tickers still produce no card; there is no guessed
 market mood. DEMO cards answer unavailable, never a real-market mood. No live
 Slack installation or provider test was performed for this command.
+
+
+Public-channel startup join uses Slack conversations.join:
+https://docs.slack.dev/reference/methods/conversations.join/ . It requires the
+channels:join bot scope. Public channel IDs normally start with C; some private
+channels do too, so an automatic join may fail and they still need invitation.
+The configured channel gate remains mandatory. Responding means posting the
+existing ticker/mood card, not emoji reactions, and Finnhub visibility must
+remain limited to the owner. No live Slack join or scope installation verified.

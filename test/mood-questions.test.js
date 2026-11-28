@@ -9,6 +9,14 @@ const phrases=[
  'onko $NVDA back?', 'onko $NVDA takaisin?', 'onko $NVDA palannut?',
  'onko $NVDA pohjalla?', 'onko $NVDA ohi?', 'joko $NVDA on takaisin?',
  'onko $NVDA nousussa?', 'onko $NVDA laskussa?',
+ 'is $NVDA over now?', "what's the mood on $NVDA?", 'what is the mood for $NVDA?',
+ '$NVDA over or back?', '$NVDA is back again?', 'is $NVDA still over today?',
+ 'hey, is $NVDA back right now, please?', 'how is $NVDA doing?', "how's $NVDA looking?",
+ 'onko $NVDA vielä pelissä?', 'miltä $NVDA näyttää?', 'miltä $NVDA näyttää tänään?',
+ 'miten $NVDA menee nyt?', 'miten $NVDA voi?', 'mikä on $NVDA fiilis?',
+ 'mikä on $NVDA:n tilanne nyt?', 'hei, onko $NVDA jo takaisin, kiitos?',
+ '$NVDA onko nyt nousussa?', '$NVDA takaisin taas?',
+
 ];
 const now=Date.parse('2026-11-27T18:00:00Z');
 const base={symbol:'NVDA',name:'Nvidia',price:106,previousClose:100,currency:'USD',asOf:new Date(now).toISOString(),source:'Finnhub',fixture:false,priceKind:'us-quote',history:[]};
@@ -42,4 +50,23 @@ test('ordinary ticker cards stay unchanged, questions only affect matching symbo
  const demo=[];
  await createHandler({provider:{lookup:async()=>({...base,fixture:true})},send:async p=>demo.push(p),now:()=>now})({channel:'C123',ts:'123.5',text:'onko $NVDA takaisin?'});
  assert.match(demo[0].card.text,/^NVDA: Mood unavailable/);assert.match(demo[0].card.text,/DEMO/);
+});
+
+test('mood phrase must end the question, not introduce a price or other continuation',async()=>{
+ for(const text of ['is $NVDA over 100?', 'is $AAPL back at 200 yet?', 'is $TSLA done reporting?', 'onko $NVDA ohi 100 dollarin?', 'is $NVDA back to normal?', 'is $NVDA over-valued?']) {
+  assert.deepEqual(moodQuestionTickers(text),[],text);
+  const sent=[];
+  await createHandler({provider:{lookup:async symbol=>({...base,symbol})},send:async p=>sent.push(p),now:()=>now})({channel:'C123',ts:'123.4',text});
+  assert.equal(sent.length,1);
+  assert.match(sent[0].card.text,/^[A-Z]+: 106.00 USD\./);
+ }
+ for(const text of ['is $NVDA back to normal? is $AAPL over 100?','is $NVDA over-priced?','is $NVDA back/above 100?']) assert.deepEqual(moodQuestionTickers(text),[],text);
+ assert.deepEqual(moodQuestionTickers('is $NVDA back?!  '),['NVDA']);
+ assert.deepEqual(moodQuestionTickers('is $NVDA back. is $AAPL over?'),['NVDA','AAPL']);
+});
+
+test('broader grammar stays whole-question bounded and retains the ticker cap',()=>{
+ for(const text of ["what's the mood on $NVDA at 100?",'miltä $NVDA näyttää 100 dollarin kohdalla?', 'onko $NVDA vielä pelissä 100 eurolla?', '$NVDA over 100?', '$NVDA takaisin 100 dollariin?', 'miten $NVDA menee yli 100?', 'I wonder if $NVDA is back', 'is $NVDA over-valued now?']) assert.deepEqual(moodQuestionTickers(text),[],text);
+ assert.deepEqual(moodQuestionTickers('is $AAPL back? is $NVDA over? is $SPY back? is $MSFT back?'),['AAPL','NVDA','SPY']);
+ assert.deepEqual(moodQuestionTickers('is $BRK.B over or back?'),['BRK.B']);
 });

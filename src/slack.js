@@ -2,7 +2,7 @@ import { App } from '@slack/bolt';
 import { configuredProvider } from './config.js';
 import { createHandler } from './bot.js';
 import { moodOptions } from './mood.js';
-import { allowedChannels, channelHandler } from './slack-events.js';
+import { allowedChannels, channelHandler, joinAllowedPublicChannels } from './slack-events.js';
 
 const provider = configuredProvider();
 if (!process.env.SLACK_BOT_TOKEN || !process.env.SLACK_APP_TOKEN) throw new Error('Slack bot and Socket Mode app tokens are required.');
@@ -18,5 +18,7 @@ const handler = createHandler({
   },
 });
 app.message(channelHandler(channels, handler));
+const failedJoins = await joinAllowedPublicChannels(app.client, channels);
+if (failedJoins.length) console.error(`Could not auto-join configured channel(s): ${failedJoins.join(', ')}. Check channels:join scope, reinstall app, or invite bot manually. Private channels require invitation. No automatic retry.`);
 await app.start();
 console.log('Stonksbot connected with explicitly configured provider and channel allowlist.');

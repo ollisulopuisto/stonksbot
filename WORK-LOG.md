@@ -96,3 +96,35 @@ Tests cover every documented phrasing, uppercase variants, ignored code/links,
 word boundaries, all four actual outcomes, threading, excluded channel/ticker
 and ordinary-card compatibility. No quota/scope/deploy change or merge. No live
 Slack client/provider request verified; local synthetic pixels checked separately.
+
+
+## 2026-11-28, broader whole-question recognition
+
+Owner requested better phrase recognition; independent review identified prefix
+matches such as over 100 and back at 200. Branch from merged PR4, no overlapping
+open PR. Replaced prefix regex with explicit whole-question patterns, sharing
+existing sanitizer/cashtag cap. Added English/Finnish word order, timing/filler,
+mood and state questions, retaining deterministic matching and no extra calls.
+
+Regression first failed on is $NVDA over 100. Tests now cover all documented
+forms, all six reported false positives through actual handler, further price
+continuations, BRK.B, multiple questions, original accepted variants and ticker
+cap. Own review traced sentence boundaries, class-share dots, punctuation, regex
+anchors/length, sanitizer, per-symbol matching and unchanged evaluator/provider/
+channel/card paths. No formula/layout/dependency/scope changes. Full tests, audit,
+demo and diff checks pass. No live market/Slack, deploy or merge performed.
+
+
+### Public-channel startup join
+
+Owner asked to join public channels and respond there. Added one startup join
+attempt per configured C-prefixed channel via conversations.join; no discovery
+or joining unlisted channels. channels:join scope and app reinstall are documented.
+Already-member succeeds, join failure retains other channels/event handling and
+logs only configured IDs plus guidance, never raw Slack data. Private channels
+need invitation, including C-prefixed private channels in newer workspaces.
+No emoji reactions or channel-allowlist change. Tests first failed before helper
+existed, then exercise success/already-member, exception/ok:false, skipped private/
+DM IDs, allowed public response and excluded-channel gate through actual handler.
+Own review traced startup order, failure isolation, scope setup and source-data
+visibility limits. No deployment or real Slack scope/join operation performed.

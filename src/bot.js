@@ -1,4 +1,5 @@
 import { chartPng } from './chart.js';
+import { questionSymbols } from './questions.js';
 import { validateQuote } from './provider.js';
 import { evaluateMood, moodText, oldDailyDate } from './mood.js';
 
@@ -11,8 +12,7 @@ export function extractTickers(text = '') {
 // Explicit, bounded phrase grammar. Unrecognized cashtags still use normal cards.
 export function moodQuestionTickers(text = '') {
   const plain = plainMessage(text);
-  const pattern = /\b(?:is\s+|onko\s+|joko\s+)\$([A-Za-z][A-Za-z0-9]{0,9}(?:[.-][A-Za-z0-9]{1,5})?)(?![\w.-])\s+(?:on\s+)?(?:over\s+(?:or|vai)\s+back|back\s+(?:or|vai)\s+over|back(?:\s+yet)?|over|done|takaisin|palannut|pohjalla|ohi|nousussa|laskussa)(?![\p{L}\p{N}_])/giu;
-  const questions = new Set([...plain.matchAll(pattern)].map(match => match[1].toUpperCase()));
+  const questions = questionSymbols(plain);
   return extractTickers(text).filter(symbol => questions.has(symbol));
 }
 const safe = text => String(text).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]).slice(0, 200);
