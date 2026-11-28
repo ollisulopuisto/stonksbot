@@ -743,12 +743,8 @@ is chosen; if catalog validation fails, it does not guess the company instead.
 Cards show the canonical instrument and exchange; chart titles use that same
 resolved identity. Provider prices, history and mood are never mixed across venues.
 
-Limit: no bundled top500Xetra seed is included yet. The official instrument
-CSV has identifiers but no ranking; available monthly equity-segment turnover
-workbooks do not establish a combined500equity/ETF ranking or explicit open
-redistribution grant. See official instrument/turnover/disclaimer sources:
-https://www.eurexgroup.com/xetra-en/instruments/instruments
-https://www.cashmarket.deutsche-boerse.com/cash-en/Data-Tech/statistics/Turnover-Statistics/monthly-turnover-statistics
-https://www.eurexgroup.com/xetra-en/disclaimer
-A bundled unverified seed would still require live catalog validation before
-quoting. No real keys or live quote endpoints were used during development.
+An unranked official XETR/EUR seed is bundled for exact-ticker priority only.
+Every seed row is unverified, never a substitute for live EODHD catalog metadata.
+No top500/ranking claim. See data/README-xetra.md for source, dates, importer,
+filters and unclear reuse terms. A cold first quote still needs live catalog
+validation. No real keys or live quote endpoints used during development.

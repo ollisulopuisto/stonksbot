@@ -34,3 +34,7 @@ test('handler exact catalog identity beats fuzzy names, titles/cards use resolve
 test('catalog failure backoff survives restart without serving stale row as absence',async()=>{
  const{EodhdProvider}=await import('../src/eodhd.js');const dir=await mkdtemp(join(tmpdir(),'catalog-fail-'));let calls=0;const args={apiKey:'fake',stateDir:dir,fetchImpl:async()=>{calls++;throw Error('down');}};await assert.rejects(new EodhdProvider(args).resolveBare('BMW'));await assert.rejects(new EodhdProvider(args).resolveBare('BMW'));assert.equal(calls,1);
 });
+test('bundled unranked seed gives offline exact priority but never supplies a quote',async()=>{
+ const{EodhdProvider}=await import('../src/eodhd.js');const{readFile}=await import('node:fs/promises');const seed=JSON.parse(await readFile(new URL('../data/xetra-seed.json',import.meta.url),'utf8'));assert.equal(seed.verified,false);assert.ok(seed.entries.length>500);assert.ok(seed.entries.some(r=>r.symbol==='EUNL.XETRA'&&r.type==='ETF'));assert.ok(seed.entries.every(r=>Object.keys(r).sort().join(',')==='currency,name,symbol,type'&&r.currency==='EUR'));
+ const dir=await mkdtemp(join(tmpdir(),'seed-'));let calls=0;const p=new EodhdProvider({apiKey:'fake',stateDir:dir,fetchImpl:async()=>{calls++;throw Error('down');}});assert.equal(await p.hasCachedSymbol('BMW'),true);assert.equal(calls,0);await assert.rejects(p.lookup('BMW.XETRA'));assert.equal(calls,1);
+});

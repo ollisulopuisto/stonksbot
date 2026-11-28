@@ -32,6 +32,8 @@ export class EodhdProvider {
   try{return await this.load(symbol,options);}finally{await lock.close();await unlink(lockPath);}
  }
  async hasCachedSymbol(code){
+  const seed=JSON.parse(await readFile(new URL('../data/xetra-seed.json',import.meta.url),'utf8'));
+  if(seed.verified===false&&seed.entries.some(row=>row.symbol===code+'.XETRA'&&row.currency==='EUR'))return true;
   try{const state=JSON.parse(await readFile(join(this.stateDir,'state.json'),'utf8'));return ['XETRA','HE'].some(suffix=>fresh(state.metadata?.[suffix],this.now(),CATALOG_TTL)&&Object.hasOwn(state.metadata[suffix].items,code+'.'+suffix));}catch{return false;}
  }
  resolveBare(code){
