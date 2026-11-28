@@ -328,3 +328,10 @@ ranking, exact name boost, clear lead requirement and ordinary-word silence.
 Hand-curated Google/Alphabet Class A and Facebook aliases separately flagged,
 source links included. Google never DEPW, hello/ping never MOMO/PASW, OTC/new
 cashtags pass when low match. Appl deliberately asks due close alternatives.
+
+Third reviewer safety pass: failing-first common-word regression and full297word
+probe retained. Dictionary guard sourced/date recorded, ordinary mentions silent.
+Mentions alias/exact or6+edit1only; cashtag4+edit1or unique first-wholeword5+prefix,
+clear lead. Real ticker APLE/HELP priority confirmed by owner via parent, no Apple
+substitution. Reviewed must-quote brand set aliases added from bundled full names.
+138tests pass including297word probe both name modes and actual handler silence.

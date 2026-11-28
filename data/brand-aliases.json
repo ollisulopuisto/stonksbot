@@ -4,11 +4,17 @@
   "aliases": {
     "google": "GOOGL.US",
     "alphabet": "GOOGL.US",
-    "facebook": "META.US"
+    "facebook": "META.US",
+    "amazon": "AMZN.US",
+    "meta": "META.US",
+    "coinbase": "COIN.US",
+    "ford": "F.US",
+    "visa": "V.US",
+    "nordea": "NDA-FI.HE"
   },
   "sources": [
     "https://abc.xyz/",
     "https://about.fb.com/news/2021/10/facebook-company-is-now-meta/"
   ],
-  "note": "Alphabet defaults deliberately to Class A GOOGL, use GOOG for Class C. Aliases identify brands, not price data."
+  "note": "Alphabet defaults deliberately to Class A GOOGL, use GOOG for Class C. Aliases identify brands, not price data. Additional reviewed short brands matched to full names in bundled directories,2026-11-28."
 }

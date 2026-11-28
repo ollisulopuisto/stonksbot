@@ -610,3 +610,15 @@ No real API keys, live provider quote, Slack app event/install or deploy tested.
 The Nasdaq snapshot's redistribution terms have not been verified. It is a factual
 identifier/name list, not price data, but that alone does not settle licensing;
 review those terms before distributing the bundled snapshot more widely.
+
+Fuzzy safety update: mentions accept only reviewed aliases/exact core names or a
+unique edit-distance1typo of6+characters. Cashtags also allow4+character typos or
+a unique first-whole-word prefix of5+characters, always clear lead>=0.12. No ETF,
+warrant or preferred approximate autoquotes. A bundled10kEnglish word guard from
+https://www.mit.edu/~ecprice/wordlist.10000 (retrieved2026-11-28, redistribution
+terms unverified) plus the reviewed297word probe blocks ordinary words, except
+explicit reviewed brands. Short brand aliases (Google, Meta, Amazon, Coinbase,
+Ford, Visa, Nordea) are hand-curated and source-directory verified. APLE is a real
+ticker, not an Apple typo: exact cashtags retain priority, as do HELP/TEST/etc.
+Mention ordinary words never inherit ticker priority. Dictionary/name policy is
+conservative: some real names such as news/invesco require explicit ticker.
