@@ -242,3 +242,22 @@ No live account/key/provider/Slack, permissions changes, deployment or merge.
 Independent review found multi-ticker opposite moods ambiguous at message level.
 Failing-first opposite-outcome two-ticker test, then limited reactions to exactly
 one distinct extracted ticker; cards still post for all accepted symbols.
+
+## 2026-11-28, stock/ETF full-name resolution
+
+Owner requested fixing ticker-only fallback for ETFs and Alpha-only. Checked
+fresh main e61ead0, open PRs and branches for overlap, no competing name fix.
+Company profile2 cannot reliably name ETFs, replaced it with Finnhub exact symbol
+search, same1name call/24h. Added Alpha standalone exact symbol+currency search,
+1extra call/day sharing25/day budget. Mixed history path stays no-name-search.
+Existing provider quota/locks/cache/pause/error rules retained; misses cached.
+Old profile2 name cache versioned, existing quote cache expires normally.
+
+New synthetic QQQ tests failed before implementation, then cover both provider
+name resolution, cache/restart/request accounting, foreign/ambiguous match
+rejection and quote-priority last quota slot. Own adversarial review traced
+cached provider state -> name identity/currency -> quota reservation -> metadata
+request -> name cache -> card plain-text sanitation. Names never invented,
+missing name/rights/network/quota still ticker fallback, explicitly documented.
+No keys/live provider requests, signup, purchase or deployment.114tests pass,
+audit/demo/diff checks pass; exact-head CI/reviewer gate required before merge.

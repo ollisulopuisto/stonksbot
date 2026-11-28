@@ -1,3 +1,4 @@
+import { cleanName } from './instrument-name.js';
 import { mkdir, open, readFile, rename, stat, unlink, writeFile } from 'node:fs/promises';
 import { resolve, join } from 'node:path';
 import { validateQuote } from './provider.js';
@@ -77,23 +78,23 @@ export class FinnhubProvider {
       // /quote contains no symbol/currency or free historical series. The
       // The selected market scope is US/USD; an optional map restricts it further.
       if (!Number.isFinite(body?.c) || body.c <= 0 || !Number.isInteger(body?.t) || body.t <= 0 || body.t * 1000 > now + 60000) throw fail();
-      // Profile2 is a separate metered call, best-effort; never lose a quote.
+      // Exact symbol search covers stocks AND ETFs, one metered name request.
       // Opt-in avoids changing the quote-only quota for existing installations.
       let name=symbol;
       if (this.resolveNames) {
         state.names ??= {};
         if (!state.names || typeof state.names!=='object' || Array.isArray(state.names)) throw fail();
         const entry=Object.hasOwn(state.names,symbol)&&state.names[symbol];
-        if (entry && Number.isFinite(entry.at) && entry.at<=now && now-entry.at<86400000 && typeof entry.name==='string') name=entry.name;
+        if (entry && Number.isFinite(entry.at) && entry.at<=now && now-entry.at<86400000 && entry.version===2 && typeof entry.name==='string') name=entry.name;
         else if(state.calls.length<this.minuteLimit && state.calls.filter(t=>now-t<1000).length<30 && now>=state.blockedUntil) {
           state.calls.push(now);await save();
           try {
-            const profileUrl=new URL('https://finnhub.io/api/v1/stock/profile2');profileUrl.search=new URLSearchParams({symbol});
+            const profileUrl=new URL('https://finnhub.io/api/v1/search');profileUrl.search=new URLSearchParams({q:symbol,exchange:'US'});
             const response=await this.fetchImpl(profileUrl,{headers:{'X-Finnhub-Token':this.apiKey},signal:AbortSignal.timeout(15000),redirect:'error'});
             if(response.status===429)state.blockedUntil=now+MINUTE;
-            if(response.ok){const profile=await response.json();if(profile?.ticker===symbol && typeof profile.name==='string' && profile.name.trim())name=profile.name.trim().slice(0,120);}
+            if(response.ok){const found=await response.json();const exact=Array.isArray(found?.result)?found.result.filter(x=>x.symbol===symbol):[];if(exact.length===1&&typeof exact[0].description==='string')name=cleanName(exact[0].description)||symbol;}
           }catch{} // No raw errors, and ticker remains a valid fallback.
-          state.names[symbol]={at:now,name};await save();
+          state.names[symbol]={at:now,name,version:2};await save();
         }
       }
       const quote = validateQuote({ symbol, name, price: body.c, currency: tickerCurrency(this.currencies, symbol),

@@ -471,3 +471,31 @@ reactions. No message edits/bot messages, bare-word ticker scanning or backgroun
 monitor. Posting can fail while reaction succeeds. Existing delivery caveats
 remain. No live Slack, emoji creation, installation or scope changes performed.
 https://docs.slack.dev/reference/methods/reactions.add/
+
+### Stock and ETF name lookup update
+
+Configured Finnhub now uses /search?q=SYMBOL&exchange=US instead of company-only
+profile2. One EXACT symbol match supplies description, including US ETF names
+when indexed. No fuzzy/foreign listing match. Same one extra metered name request
+per24h/symbol as before, persisted including misses and sharing60/min +30/sec
+quote budget. Existing name-cache entries from profile2 are versioned out on next
+quote refresh, so an ETF ticker fallback does not hide the new resolver for24h.
+FINNHUB_RESOLVE_NAMES=no still explicitly disables search. Profile2 isn't also
+called, and no paid ETF-profile endpoint is used.
+
+Alpha-only configured daily mode now also searches SYMBOL_SEARCH, exact symbol
+AND currency, for full stock/ETF name. One additional request per24h/symbol,
+including misses, counted against the SAME25/day rolling budget as daily history.
+Use ALPHAVANTAGE_RESOLVE_NAMES=no to opt out. Mixed Finnhub+Alpha history does NOT
+run Alpha name search, avoiding duplicate metadata calls. Existing cached daily
+quotes can retain ticker fallback until the normal6h quote cache expires; new
+names appear on next quote refresh. No quota bypass or cache deletion needed.
+
+Name lookup is best effort: absent/ambiguous exact match, no name field, quota,
+network errors, missing endpoint rights or explicit opt-out still retain ticker
+fallback rather than invent an instrument name or discard a valid price. Old
+name data is not refreshed more than24h. Full-name availability is NOT guaranteed
+for every security. Only synthetic responses tested, no key or live API request.
+https://finnhub.io/docs/api/symbol-search
+https://github.com/Finnhub-Stock-API/finnhub-go/blob/master/api/openapi.yaml
+https://www.alphavantage.co/documentation/ (Search Endpoint)
