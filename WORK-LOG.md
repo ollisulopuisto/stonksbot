@@ -166,3 +166,11 @@ runners); exact PR head CI must be checked separately.
 First remote CI exposed an existing test hardcoded to /downloads. Made its
 chart scratch path use the test's temporary directory; no runtime behavior
 change. Re-ran full local suite before updating PR head.
+
+Independent review found hourly caching could retain a normally delayed quote
+past the65min source-age threshold during market hours. Added failing-first
+actual lookup test, then on-demand source-age refresh only in regular Helsinki
+weekday10:00-18:30hours. Outside hours, existing metadata/history/quote cache
+spends no calls, card says outside regular hours instead of spurious stale and
+mood stays unavailable. Extracted timezone session helper, official Nasdaq hours
+source recorded. No holiday/half-day calendar, explicitly documented.98tests pass.

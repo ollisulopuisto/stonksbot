@@ -370,12 +370,15 @@ card; failed validation fails closed. Metadata refreshes every24hours and costs
 2calls (exchange list + whole HE symbol list). Initial symbol quote+history costs
 another2calls. Metadata access itself can fail if the free account lacks rights.
 
-Quotes normally15-20minutes delayed are cached60minutes to conserve20calls/day;
+Quotes normally15-20minutes delayed are cached up to60minutes to conserve20calls/day;
 unchanged timestamps are always shown, NEVER called real-time. After65minutes
-source age they are labelled stale. Thus a cached card can be stale before the
-hourly cache expires, not silently re-dated or auto-refreshed. Closures leave old
-quotes; there is no full exchange holiday/hours calendar. Mood requires the same
-Helsinki local date and a weekday, not proof the exchange is open. Daily history
+source age during regular hours they are labelled stale if no fresh data is available. During regular Helsinki weekday hours (10:00-18:30 local), source age65minutes
+triggers on-demand refresh even before60minutes fetch age. Outside that window,
+existing quote/catalog/history caches are retained without network calls and
+labelled outside regular hours, not STALE merely due to closure. The original
+source timestamp stays visible. No full holiday/half-day calendar: weekday hours
+are not proof the exchange is open, and holidays can still spend budget. Mood
+requires regular hours and the same Helsinki local date. Daily history
 refreshes on the next Helsinki date or after24hours,1call/symbol. Synthetic tests
 cover catalog validation and all quota accounting, not actual key entitlement.
 

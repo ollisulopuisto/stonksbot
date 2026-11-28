@@ -1,3 +1,4 @@
+import { helsinkiDate, helsinkiRegularSession } from './helsinki-session.js';
 import { mkdir, open, readFile, rename, stat, unlink, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { validateQuote } from './provider.js';
@@ -6,7 +7,7 @@ const fail=()=>Error('EODHD unavailable, entitlement missing or invalid data; no
 const supported=s=>typeof s==='string' && /^[A-Z][A-Z0-9-]{0,14}\.HE$/.test(s) && s.length<=16;
 const positive=n=>Number.isFinite(n)&&n>0;
 const fresh=(entry,now,ttl)=>entry && Number.isFinite(entry.at) && entry.at<=now && now-entry.at<ttl;
-export const helsinkiDate=t=>new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Helsinki',year:'numeric',month:'2-digit',day:'2-digit'}).format(t);
+export { helsinkiDate } from './helsinki-session.js';
 
 // On-demand only. One process/key/state root; all four endpoint types cost1call.
 export class EodhdProvider {
@@ -46,8 +47,12 @@ export class EodhdProvider {
     if(!response.ok)throw fail();return await response.json();
    }catch{throw fail();}
   };
+  const inSession=helsinkiRegularSession(now);
+  const existingQuote=Object.hasOwn(state.quotes,symbol)&&state.quotes[symbol];
+  // Outside regular hours, retain existing data without spending the tiny budget.
+  const retainClosed=!inSession&&existingQuote&&state.metadata;
   // Fetch both catalogs at most once/day. Exchange suffix alone proves nothing.
-  if(!fresh(state.metadata,now,DAY)){
+  if(!retainClosed&&!fresh(state.metadata,now,DAY)){
    const exchanges=await request('exchanges-list/');
    const he=Array.isArray(exchanges)&&exchanges.find(x=>x.Code==='HE');
    if(!he||he.OperatingMIC!=='XHEL'||he.Currency!=='EUR')throw fail();
@@ -62,7 +67,7 @@ export class EodhdProvider {
   let quote;
   const cached=Object.hasOwn(state.quotes,symbol)&&state.quotes[symbol];
   // Hourly cache keeps the tiny free budget useful. Source timestamp never changes.
-  if(fresh(cached,now,60*MINUTE)){
+  if(cached&&(!inSession || (fresh(cached,now,60*MINUTE)&&now-Date.parse(cached.quote?.asOf)<65*MINUTE))){
    quote=validateQuote(cached.quote);
    if(!positive(quote.previousClose)||quote.symbol!==symbol||quote.currency!=='EUR'||quote.exchange!=='XHEL'||quote.fixture!==false||quote.priceKind!=='delayed-quote'||quote.source!=='EODHD Helsinki delayed quote and raw daily closes')throw fail();
   }else{
@@ -74,7 +79,7 @@ export class EodhdProvider {
   try{
    let daily=Object.hasOwn(state.histories,symbol)&&state.histories[symbol];
    // A new Helsinki trading date invalidates yesterday's cached history.
-   if(!fresh(daily,now,DAY)||helsinkiDate(daily.at)!==helsinkiDate(now)){
+   if(!daily||(!retainClosed&&(!fresh(daily,now,DAY)||helsinkiDate(daily.at)!==helsinkiDate(now)))){
     const from=new Date(now-40*DAY).toISOString().slice(0,10);
     const rows=await request('eod/'+symbol,{from,to:helsinkiDate(now),period:'d',order:'a'});
     if(!Array.isArray(rows)||rows.length<2||rows.length>1000)throw fail();

@@ -1,4 +1,4 @@
-import { helsinkiDate } from './eodhd.js';
+import { helsinkiDate, helsinkiRegularSession } from './helsinki-session.js';
 const DAY = 86400000;
 export const oldDailyDate = (date, now) => Date.parse(new Date(now).toISOString().slice(0,10)) - Date.parse(date.slice(0,10)) > 5 * DAY;
 const defaults = { window: 7, multiplier: 3, fallbackPercent: 5 };
@@ -27,7 +27,7 @@ export function evaluateMood(quote, now = Date.now(), options = {}) {
   const timestamp = Date.parse(quote.asOf);
   const daily = quote.priceKind === 'daily-close';
   const delayed = quote.priceKind === 'delayed-quote';
-  if (delayed && (quote.historySource !== quote.source || quote.exchange !== 'XHEL' || quote.currency !== 'EUR' || quote.moodUnavailable)) return unavailable(quote.moodUnavailable || 'Unverified Helsinki identity');
+  if (delayed && (!helsinkiRegularSession(now) || quote.historySource !== quote.source || quote.exchange !== 'XHEL' || quote.currency !== 'EUR' || quote.moodUnavailable)) return unavailable(quote.moodUnavailable || 'Unverified Helsinki identity');
   if (!['us-quote', 'daily-close', 'delayed-quote'].includes(quote.priceKind) || !Number.isFinite(timestamp) ||
       timestamp > now + 60000 || now - timestamp > (daily ? Infinity : (delayed ? 65 : 15) * 60000))
     return unavailable('No fresh session move');
