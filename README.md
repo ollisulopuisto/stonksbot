@@ -728,7 +728,8 @@ catalogs, ETFs included. A valid US quote wins. Multiple EU listings, or a known
 US identity whose quote is missing, return explicit .US/.DE/.HE choices instead
 of guessing. Explicit suffixes and existing Helsinki overrides remain unchanged.
 Finnhub all-zero quotes alone do not establish absence: a separately metered US
-search must return a well-formed empty result. Timeouts, auth/quota failures and
+search must return a complete well-formed list with no exact case-insensitive
+symbol match. Fuzzy lookalikes such as BMWYY do not block BMW fallback. Timeouts, auth/quota failures and
 malformed responses never redirect. US-only absence is cached24h, transient
 failures15min. Cache schema2 discards the previous conflated miss entries.
 

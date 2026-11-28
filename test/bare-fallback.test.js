@@ -15,7 +15,7 @@ test('known US catalog identity never silently becomes EU after a null quote',as
  const r=new StaticHelsinkiRouter({lookup:async()=>null},{resolveBare:async()=>['ABC.XETRA']},new Map(),null,Date.now,new Set(['ABC']));assert.match((await r.lookup('ABC')).resolutionNotice,/ABC.US.*ABC.DE/);
 });
 test('Finnhub zero quote needs separate confirmed empty search before fallback',async()=>{
- const{FinnhubProvider}=await import('../src/finnhub.js');for(const [response,absent]of [[{count:0,result:[]},true],[{count:1,result:[{symbol:'BMW'}]},false],[{error:'auth'},false]]){
+ const{FinnhubProvider}=await import('../src/finnhub.js');for(const [response,absent]of [[{count:1,result:[{symbol:'BMWYY',type:'Common Stock',description:'OTC lookalike'}]},true],[{count:1,result:[{symbol:'bmw',type:'Common Stock'}]},false],[{count:0,result:[]},true],[{count:1,result:[{symbol:'BMW'}]},false],[{count:1,result:[{description:'missing symbol'}]},false],[{count:2,result:[]},false],[{error:'auth'},false]]){
   const dir=await mkdtemp(join(tmpdir(),'finn-absence-'));let calls=0;const p=new FinnhubProvider({apiKey:'fake',stateDir:dir,fetchImpl:async u=>{calls++;return{ok:true,json:async()=>u.pathname.endsWith('/quote')?{c:0,h:0,l:0,o:0,pc:0,t:0,d:null,dp:null}:response};}});
   if(absent)assert.equal(await p.lookup('BMW'),null);else await assert.rejects(p.lookup('BMW'));assert.equal(calls,2);
  }

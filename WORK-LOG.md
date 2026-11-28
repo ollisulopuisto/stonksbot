@@ -410,3 +410,8 @@ mood, chart titles and exchange identity. Moved potentially metered name checks
 inside dedup/inflight gate. Fixed catalog-only refresh bypass when closed.
 Before/after card pixels inspected. Seed request remains blocked on ranked
 source/reuse basis, not disguised as complete. No merge/deploy/livekeys.
+
+Reviewer note fix: Finnhub search is fuzzy. Failing-first BMWYY-result test
+failed, now only exact case-insensitive US-scoped symbol presence blocks fallback.
+Malformed/missing symbols or count/list mismatch fail closed.159tests pass.
+Explicit .US repeat-call optimization deferred to avoid unrelated cache changes.

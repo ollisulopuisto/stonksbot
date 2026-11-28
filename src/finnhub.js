@@ -87,7 +87,10 @@ export class FinnhubProvider {
         try{const r=await this.fetchImpl(search,{headers:{'X-Finnhub-Token':this.apiKey},signal:AbortSignal.timeout(15000),redirect:'error'});
          if(r.status===429){state.blockedUntil=now+MINUTE;await save();throw fail();}
          if(!r.ok)throw fail();const found=await r.json();
-         if(Number.isInteger(found?.count)&&found.count===0&&Array.isArray(found.result)&&found.result.length===0)return null;
+         // Search is fuzzy: BMWYY does not establish a US listing for BMW.
+         // The US-scoped query must return a complete, well-formed result list.
+         if(!Number.isInteger(found?.count)||found.count<0||!Array.isArray(found.result)||found.count!==found.result.length||found.result.some(row=>!row||typeof row.symbol!=='string'||!row.symbol.trim()))throw fail();
+         if(!found.result.some(row=>row.symbol.toUpperCase()===symbol.toUpperCase()))return null;
         }catch{throw fail();}
         throw fail();
       }
