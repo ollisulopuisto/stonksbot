@@ -370,3 +370,14 @@ values and dimensions guards preserved, zero span padded, endpoint/extrema rings
 linear area matches line segments (no fabricated smooth price extrema). Font
 license included, no runtime font/Python dependency. Custom tiny dimensions are
 bounded but are not readability recommendations. No merge/deploy authorization.
+
+Axis review: current main/open PR overlap checked, separate fix on c50b899.
+Failing-first scale/padding tests,147tests/audit0/diff clean. Replaced original
+round-bound proposal with owner's high-ceiling/low-floor plus5%bottom gutter;
+flat/zero require finite symmetric span. Removed fill per owner. Gridline/value
+consumers both use same scale ticks. No price/provider/mood changes. Own review
+ran: tight bounds retain outliers, no rounding fabricated high/low, endpoint at
+ceiling still visible with plot margin, helper lines drawn behind cyan line but
+not obscured by fill. Actual pixels inspected normal/flat/two-point/tiny/zero,
+last label avoids adjacent tick, no collisions at640x320. Synthetic META data,
+not original screenshot exact samples. No merge/deploy until new yes.
