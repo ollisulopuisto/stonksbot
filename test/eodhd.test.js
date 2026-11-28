@@ -113,3 +113,9 @@ test('refreshes on-demand stale cache during Helsinki regular session, never bur
  assert.doesNotMatch(buildCard(first,NOW+30*3600000).text,/STALE/);
  assert.equal(evaluateMood(first,NOW+30*3600000).basis,'unavailable');
 });
+
+test('nineteen-day-old closed cache stays quota-free but visibly OLD DATA',async t=>{
+ const s=await setup(t);const q=await s.provider.lookup('NOKIA.HE');s.advance(22*86400000);
+ const cached=await s.provider.lookup('NOKIA.HE');assert.equal(s.calls.length,4);assert.equal(cached.asOf,q.asOf);
+ assert.match(buildCard(cached,s.clock()).text,/OLD DATA/);
+});

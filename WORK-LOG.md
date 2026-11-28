@@ -174,3 +174,7 @@ weekday10:00-18:30hours. Outside hours, existing metadata/history/quote cache
 spends no calls, card says outside regular hours instead of spurious stale and
 mood stays unavailable. Extracted timezone session helper, official Nasdaq hours
 source recorded. No holiday/half-day calendar, explicitly documented.98tests pass.
+
+Second review: indefinite closed-market cache could hide ancient data. Added
+failing-first22day-old cache test and OLD DATA after3elapsed days, even outside
+hours; no extra calls. Documented uncached after-hours initial4call cost.

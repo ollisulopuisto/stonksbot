@@ -400,3 +400,7 @@ Official references:
 - https://eodhd.com/financial-apis/api-for-historical-data-and-volumes
 - https://eodhd.com/help/ai-tools
 - https://eodhd.com/financial-apis/terms-conditions
+
+Closed-market cached quotes older than3elapsed days carry OLD DATA even outside
+regular hours. Existing cache costs no calls after hours, but an uncached symbol
+can still require4initial calls (catalogs2 + quote1 + history1). No holiday feed.
