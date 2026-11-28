@@ -1,3 +1,4 @@
+import { buildCard } from '../src/bot.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { evaluateMood, moodOptions } from '../src/mood.js';
@@ -53,4 +54,24 @@ test('New York session date excludes current-session close near UTC midnight',()
  const q={...quote,asOf:new Date(time).toISOString(),historyAsOf:'2026-11-27T00:00:00Z',history:[...history,{date:'2026-11-27',close:900}]};
  assert.equal(evaluateMood(q,time).targetDate,'2026-11-27');
  assert.equal(evaluateMood(q,time).label,"We're back");
+});
+
+test('five calendar-day baseline survives a holiday weekend through market hours, sixth day is old',()=>{
+ const time=Date.parse('2026-11-30T20:00:00Z');
+ const q={...quote,asOf:new Date(time).toISOString()}; // prior history ends Nov25
+ assert.equal(evaluateMood(q,time).basis,'rolling');
+ assert.equal(evaluateMood({...q,asOf:'2026-12-01T20:00:00Z'},Date.parse('2026-12-01T20:00:00Z')).basis,'unavailable');
+ const points=[...history,{date:'2026-11-27',close:history.at(-1).close*1.04}];
+ const daily={...quote,priceKind:'daily-close',price:points.at(-1).close,asOf:'2026-11-27T00:00:00Z',history:points};
+ assert.equal(evaluateMood(daily,Date.parse('2026-12-02T20:00:00Z')).basis,'rolling');
+ assert.equal(evaluateMood(daily,Date.parse('2026-12-03T20:00:00Z')).basis,'unavailable');
+});
+
+test('card labels use five calendar-date grace too, not four-day elapsed hours',()=>{
+ const q={...quote,symbol:'AAPL',name:'AAPL',currency:'USD',source:'Finnhub'};
+ const time=Date.parse('2026-11-30T20:00:00Z');
+ const card=buildCard({...q,asOf:new Date(time).toISOString()},time);
+ assert.doesNotMatch(JSON.stringify(card),/OLD HISTORY/);
+ const later=Date.parse('2026-12-01T20:00:00Z');
+ assert.match(JSON.stringify(buildCard({...q,asOf:new Date(later).toISOString()},later)),/OLD HISTORY: more than 5 calendar days old/);
 });

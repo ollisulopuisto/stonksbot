@@ -31,7 +31,8 @@ files:write and channels:history; add groups:history only if private channels
 are intended. Subscribe to message.channels, and message.groups only as needed.
 Invite it only to intended channels.
 
-Set SLACK_BOT_TOKEN, SLACK_APP_TOKEN and an explicit comma-separated
+Both public and private channels are supported. Set SLACK_BOT_TOKEN,
+SLACK_APP_TOKEN and an explicit comma-separated
 SLACK_CHANNEL_IDS allowlist in your process environment. Do not commit tokens.
 Fixture-mode `npm start` requires STONKSBOT_ALLOW_FIXTURE_POSTING=yes. Those
 cards remain labelled DEMO. Select a live provider explicitly below; no fallback.
@@ -90,7 +91,7 @@ business use, even internally, business-name registration and expensing the plan
 without approval. A private team channel is not automatically permitted. Confirm
 this is personal-only use and the channel is visible only to you before setting
 FINNHUB_PERSONAL_USE_CONFIRMED=yes. This flag records your decision, not a license.
-This bot is personal-use-only: a private channel visible only to you, no sharing,
+This bot is personal-use-only: a workspace/channel visible only to you, no sharing,
 and no Peliteoria Oy or other business use. If others will see the cards, get
 Finnhub's written approval or another license.
 Delete stored data if your data subscription ends, as Finnhub's terms require.
@@ -99,7 +100,7 @@ Delete stored data if your data subscription ends, as Finnhub's terms require.
    `connections:write`. Bot scopes: `chat:write` and `groups:history` for a private
    channel, plus `files:write` for the Alpha Vantage chart uploads configured below.
    Subscribe to `message.groups`, install/reinstall, invite bot to the channel.
-   Public channels use `channels:history` / `message.channels` instead, but do not
+   Public channels are supported too: use `channels:history` / `message.channels` instead, but do not
    enable shared Finnhub posting without written approval.
 2. Get your own Finnhub free API key. Official pricing lists 60 API calls/minute;
    docs add a 30 calls/second cap. `/quote` supports real-time US stocks. This bot
@@ -115,7 +116,6 @@ Delete stored data if your data subscription ends, as Finnhub's terms require.
    SLACK_APP_TOKEN=<your-socket-mode-app-token>
    SLACK_CHANNEL_IDS=<your-personal-private-channel-id>
    FINNHUB_API_KEY=<your-key>
-   FINNHUB_US_SYMBOL_CURRENCIES={"AAPL":"USD","SPY":"USD"}
    FINNHUB_MINUTE_LIMIT=60
    STONKSBOT_HISTORY_PROVIDER=alpha-vantage
    ALPHAVANTAGE_API_KEY=<your-history-key>
@@ -124,10 +124,17 @@ Delete stored data if your data subscription ends, as Finnhub's terms require.
    ```
 
    This is an environment-file example, not shell commands. Quote JSON in shell
-   exports. Node does not load `.env` automatically. Verify every configured
-   symbol is a US listing denominated in USD. The quote response has no currency
-   or symbol metadata; the explicit map is your allowlist, not automatic exchange
-   verification. Other currencies rejected. No Finnish/international support.
+   exports. Node does not load `.env` automatically. By default there is no ticker
+   allowlist: US-style symbols are accepted within the US/USD market scope.
+   To restrict tickers, set FINNHUB_US_SYMBOL_CURRENCIES={"AAPL":"USD","SPY":"USD"}.
+   It restricts both Finnhub and its optional Alpha history to those exact symbols.
+   Unset means allow all supported US-style tickers; empty/malformed JSON is an
+   error, not allow-all. Bare symbols and .A/.B or -A/-B share classes are accepted;
+   exchange suffixes such as .HE are not inferred as USD. Finnhub quote responses
+   contain no currency/exchange metadata, so this is a market-scope assumption,
+   not automatic exchange verification. Use US USD listings only. No verified
+   Finnish/international coverage. Channel restrictions stay mandatory: set
+   SLACK_CHANNEL_IDS even when the ticker list is unset.
 4. `npm start` under that environment, then `$AAPL` in the allowed channel.
    Expect a threaded card with Finnhub source/timestamp. Quotes cached 15 seconds;
    market closures can leave older timestamps, flagged stale after 15 minutes.
@@ -157,13 +164,14 @@ to reset quota. Stop the bot and migrate deliberately, retaining budget history.
 
 Retained as a separate explicit mode. Its own personal-use terms apply. Set
 STONKSBOT_PROVIDER=alpha-vantage, ALPHAVANTAGE_API_KEY,
-ALPHAVANTAGE_SYMBOL_CURRENCIES (JSON symbol/currency map),
+optional ALPHAVANTAGE_SYMBOL_CURRENCIES (JSON symbol/currency restriction;
+unset defaults to all supported US-style tickers in USD),
 ALPHAVANTAGE_DAILY_LIMIT=25 and a separate STONKSBOT_STATE_DIR. It supplies daily
 unadjusted closes and chart history, not live prices. One compact
 TIME_SERIES_DAILY request supplies latest 100 closes. Six-hour cache, rolling
 24-hour request budget including failures, limit notices pause 24 hours.
 Daily midnight UTC is a trading-date marker, not exchange-close time. History
-older than 4 days is flagged old. Requires Slack files:write for chart upload.
+older than 5 calendar dates is flagged old. Requires Slack files:write for chart upload.
 
 Provider tests use invented responses, fake keys and injected fetch. No actual
 provider request/key, Slack install/layout or VPS deployment verified. Existing
@@ -181,7 +189,12 @@ Mixed-source basis: this use is personal, not business. Alpha Vantage terms gran
 personal, non-commercial use and treat acting for a corporation as commercial:
 https://www.alphavantage.co/terms%5Fof%5Fservice/ . Combining two clearly attributed
 series for the same personal viewer does not waive either provider's conditions.
-No shared Slack channel or Peliteoria use. US symbols only; Nasdaq Helsinki
+A public channel is supported if the workspace/channel remains visible only
+to you. Public versus private is a Slack setting, not permission to share data.
+Keep channels:history and message.channels enabled for public channel messages,
+groups:history and message.groups for private ones, and invite the bot to each
+SLACK_CHANNEL_IDS channel. There is no private-only filter in code. No channel
+shared with other people and no Peliteoria use. US symbols only; Nasdaq Helsinki
 coverage is not verified and US ADRs must not be treated as Helsinki listings.
 
 ## Mood labels
@@ -217,9 +230,12 @@ Existing cached quotes without previous close gain it on normal cache expiry.
 
 Alpha-only mode evaluates the latest daily-close move, not an intraday move, and
 excludes that target return from its baseline. Stale/future quotes, malformed,
-future or more-than-four-day-old history suppress mood. US session identity uses
+future or more-than-five-calendar-day-old history suppress mood. US session identity uses
 America/New_York, not UTC midnight; Alpha-only uses its labeled trading date.
-The baseline uses provider observations, does not backfill missing exchange
+The five-day grace compares calendar dates (not midnight-to-current-hour age)
+so a holiday weekend can remain usable through the fifth day. Fresh Finnhub
+quotes still have the separate 15-minute freshness limit. The baseline uses
+provider observations, does not backfill missing exchange
 sessions, and does not promise a holiday calendar. Both daily data and previous
 close are unadjusted: splits and other corporate actions may create false mood
 labels. Not investment advice, a trading signal or a VIX implementation.

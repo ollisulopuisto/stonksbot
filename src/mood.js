@@ -1,4 +1,5 @@
 const DAY = 86400000;
+export const oldDailyDate = (date, now) => Date.parse(new Date(now).toISOString().slice(0,10)) - Date.parse(date.slice(0,10)) > 5 * DAY;
 const defaults = { window: 7, multiplier: 3, fallbackPercent: 5 };
 export function moodOptions(env = process.env) {
   return checked({ window: Number(env.STONKSBOT_MOOD_WINDOW ?? 7),
@@ -25,9 +26,11 @@ export function evaluateMood(quote, now = Date.now(), options = {}) {
   const timestamp = Date.parse(quote.asOf);
   const daily = quote.priceKind === 'daily-close';
   if (!['us-quote', 'daily-close'].includes(quote.priceKind) || !Number.isFinite(timestamp) ||
-      timestamp > now + 60000 || now - timestamp > (daily ? 4 * DAY : 15 * 60000))
+      timestamp > now + 60000 || now - timestamp > (daily ? Infinity : 15 * 60000))
     return unavailable('No fresh session move');
   const targetDate = daily ? quote.asOf.slice(0, 10) : usSession(timestamp);
+  const currentDate = daily ? new Date(now).toISOString().slice(0,10) : usSession(now);
+  if (daily && Date.parse(currentDate) - Date.parse(targetDate) > 5 * DAY) return unavailable('No fresh session move');
   const history = quote.history;
   if (!Array.isArray(history)) return unavailable('Invalid daily history');
   let previousDate = '';
@@ -48,10 +51,10 @@ export function evaluateMood(quote, now = Date.now(), options = {}) {
     return unavailable('No valid same-provider previous close');
   // Do not silently turn old or contradictory history into a rolling baseline.
   if (history.length && (history.some(point => point.date > targetDate) ||
-      now - Date.parse(prior.at(-1)?.date ?? targetDate) > 4 * DAY ||
+      Date.parse(targetDate) - Date.parse(prior.at(-1)?.date ?? targetDate) > 5 * DAY ||
       (!daily && (quote.historyKind !== 'daily-close' || !quote.historySource ||
         !Number.isFinite(Date.parse(quote.historyAsOf)) || Date.parse(quote.historyAsOf) > now ||
-        quote.historyAsOf.slice(0,10) !== history.at(-1).date || now - Date.parse(quote.historyAsOf) > 4 * DAY))))
+        quote.historyAsOf.slice(0,10) !== history.at(-1).date || Date.parse(currentDate) - Date.parse(quote.historyAsOf.slice(0,10)) > 5 * DAY))))
     return unavailable('Old or unverified daily history');
   const recent = prior.slice(-(settings.window + 1));
   const moves = recent.slice(1).map((point,i) => Math.abs((point.close / recent[i].close - 1) * 100));

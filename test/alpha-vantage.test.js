@@ -30,7 +30,7 @@ test('one daily request becomes a labeled close and ascending chart; cached acro
   assert.equal(calls.length, 1);
   assert.doesNotMatch(await readFile(join(stateDir, 'state.json'), 'utf8'), /fake-test-key/);
 });
-test('unsupported symbols never consume quota; currency must be configured, no silent USD default', async t => {
+test('unsupported symbols never consume quota; explicit ticker maps restrict and reject invalid currency', async t => {
   const { provider, calls } = await setup(t);
   assert.equal(await provider.lookup('NOKIA.HE'), null); assert.equal(calls.length, 0);
   assert.throws(() => new AlphaVantageProvider({ apiKey: 'x', stateDir: '/tmp/x', currencies: { AAPL: 'dollars' } }));
@@ -71,7 +71,7 @@ test('corrupt state and held cross-process lock fail closed', async t => {
 test('configuration is fixture-default, explicit live selector never silently falls back', () => {
   assert.throws(() => configuredProvider({}), /Fixture posting/);
   assert.throws(() => configuredProvider({ STONKSBOT_PROVIDER: 'typo' }), /Unknown/);
-  assert.throws(() => configuredProvider({ STONKSBOT_PROVIDER: 'alpha-vantage' }), /CURRENCIES/);
+  assert.throws(() => configuredProvider({ STONKSBOT_PROVIDER: 'alpha-vantage' }), /STATE_DIR/);
   assert.ok(configuredProvider({ STONKSBOT_ALLOW_FIXTURE_POSTING: 'yes' }));
 });
 test('real handler can render provider result as PNG without live Slack or credentials', async t => {
@@ -82,7 +82,7 @@ test('real handler can render provider result as PNG without live Slack or crede
 test('daily-close card flags old dates and never claims a current quote', async t => {
   const { provider } = await setup(t);
   const quote = await provider.lookup('AAPL');
-  assert.equal(buildCard(quote, now + 7 * 86400000).text, 'AAPL: 250.12 USD. DAILY CLOSE, not a live price; UTC timestamp denotes trading date only; OLD DATA: more than 4 days old. As of 2026-11-27T00:00:00Z. Mood unavailable: No fresh session move.');
+  assert.equal(buildCard(quote, now + 7 * 86400000).text, 'AAPL: 250.12 USD. DAILY CLOSE, not a live price; UTC timestamp denotes trading date only; OLD DATA: more than 5 calendar days old. As of 2026-11-27T00:00:00Z. Mood unavailable: No fresh session move.');
   assert.throws(() => new AlphaVantageProvider({ apiKey: 'x', stateDir: '/tmp/x', currencies: ['USD'] }));
 });
 
