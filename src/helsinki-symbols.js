@@ -1,3 +1,4 @@
+import {eodhdSupported,eodhdSymbol} from './eodhd-symbols.js';
 import { dirname } from 'node:path';
 import { readFile, mkdir, writeFile, rename } from 'node:fs/promises';
 const bare=s=>typeof s==='string'&&/^[A-Z][A-Z0-9-]{0,12}$/.test(s);
@@ -20,7 +21,7 @@ export class StaticHelsinkiRouter {
  constructor(usProvider,helsinkiProvider,entries,statePath,now=Date.now){Object.assign(this,{usProvider,helsinkiProvider,entries,statePath,now});this.queue=Promise.resolve();}
  lookup(symbol,options){const next=this.queue.then(()=>this.lookupLocked(symbol,options));this.queue=next.catch(()=>{});return next;}
  async lookupLocked(symbol,options){
-  if(symbol.endsWith('.HE'))return this.helsinkiProvider.lookup(symbol,options);
+  if(eodhdSupported(symbol))return this.helsinkiProvider.lookup(eodhdSymbol(symbol),options);
   if(symbol.endsWith('.US'))return this.usProvider?.lookup(symbol.slice(0,-3),options)??null;
   const mapping=this.entries.get(symbol);
   if(!mapping){

@@ -1,0 +1,18 @@
+import test from'node:test';import assert from'node:assert/strict';import{EodhdProvider}from'../src/eodhd.js';import{StaticHelsinkiRouter}from'../src/helsinki-symbols.js';import{createHandler,extractTickers}from'../src/bot.js';import{loadNameIndex}from'../src/name-lookup.js';import{evaluateMood}from'../src/mood.js';import{mkdtemp,rm}from'node:fs/promises';import{tmpdir}from'node:os';import{join}from'node:path';
+const now=Date.parse('2026-11-27T12:00:00Z');
+test('six requested Xetra cashtags resolve canonical EUR identity, name, chart and mood',async t=>{
+ const dir=await mkdtemp(join(tmpdir(),'xetra-'));t.after(()=>rm(dir,{recursive:true,force:true}));const calls=[];
+ const e=new EodhdProvider({apiKey:'fake',stateDir:dir,now:()=>now,fetchImpl:async url=>{calls.push(url);let body;if(url.pathname.endsWith('exchanges-list/'))body=[{Code:'XETRA',OperatingMIC:'XETR',Currency:'EUR'}];else if(url.pathname.includes('exchange-symbol-list'))body=['EUNL','BMW'].map(Code=>({Code,Exchange:'XETRA',Currency:'EUR',Name:Code==='EUNL'?'iShares Core MSCI World UCITS ETF':'Bayerische Motoren Werke AG'}));else if(url.pathname.includes('real-time'))body={code:url.pathname.split('/').at(-1),timestamp:now/1000-1200,close:120,previousClose:109};else body=Array.from({length:10},(_,i)=>({date:'2026-11-'+(16+i),close:100+i,adjusted_close:100+i}));return{ok:true,json:async()=>body};}});
+ const router=new StaticHelsinkiRouter({lookup:async()=>{throw Error('must not query US');}},e,new Map(),null);const index=await loadNameIndex();const posts=[];const h=createHandler({nameIndex:index,provider:router,now:()=>now,send:async p=>posts.push(p),onError:e=>{throw e;}});
+ for(const[i,form]of['$eunl','$EUNL','$eunl.de','$EUNL.DE','$bmw.de','$BMW.DE'].entries()){await h({channel:'C1',ts:`1.${i}`,text:form});const q=await router.lookup(extractTickers(form)[0]);assert.equal(q.currency,'EUR');assert.equal(q.exchange,'XETR');assert.ok(q.symbol.endsWith('.XETRA'));assert.equal(evaluateMood(q,now).label,"We're back");}
+ assert.equal(posts.length,6);assert.ok(posts.every(p=>p.png&&/EUR/.test(p.card.text)));assert.ok(posts[0].card.text.includes('iShares'));assert.ok(posts[4].card.text.includes('Bayerische'));assert.equal(calls.length,6);assert.ok(calls.every(u=>!u.pathname.endsWith('.DE')));
+});
+test('Xetra identity/session rejects wrong venue/currency, respects Berlin DST and no US suffix fallback',async()=>{
+ const{marketSession,eodhdSymbol}=await import('../src/eodhd-symbols.js');const{validateQuote}=await import('../src/provider.js');
+ assert.equal(eodhdSymbol('eunl.de'),'EUNL.XETRA');assert.equal(eodhdSymbol('BMW.DE'),'BMW.XETRA');
+ assert.equal(marketSession(Date.parse('2026-07-03T06:59:00Z'),'EUNL.XETRA'),false);assert.equal(marketSession(Date.parse('2026-07-03T07:00:00Z'),'EUNL.XETRA'),true);assert.equal(marketSession(Date.parse('2026-11-27T16:30:00Z'),'EUNL.XETRA'),false);
+ const q={symbol:'EUNL.XETRA',name:'synthetic',currency:'EUR',exchange:'XETR',price:100,previousClose:99,priceKind:'delayed-quote',source:'EODHD',asOf:new Date(now).toISOString(),fixture:false,history:[]};validateQuote(q);
+ for(const change of [{currency:'USD'},{exchange:'XHEL'},{symbol:'EUNL.DE'},{symbol:'AAPL.US'}])assert.throws(()=>validateQuote({...q,...change}));
+ assert.equal(evaluateMood({...q,historySource:'EODHD'},Date.parse('2026-11-27T17:00:00Z')).basis,'unavailable');
+ const calls=[];const r=new StaticHelsinkiRouter({lookup:async s=>calls.push('us:'+s)},{lookup:async s=>calls.push('eod:'+s)},new Map(),null);await r.lookup('EUNL');await r.lookup('BMW.DE');await r.lookup('BMW.XETRA');assert.deepEqual(calls,['eod:EUNL.XETRA','eod:BMW.XETRA','eod:BMW.XETRA']);
+});

@@ -1,11 +1,11 @@
+import {eodhdSymbol,eodhdSupported,marketFor,marketSession,marketDate} from './eodhd-symbols.js';
 import { rangeStart } from './chart-ranges.js';
-import { helsinkiDate, helsinkiRegularSession } from './helsinki-session.js';
 import { mkdir, open, readFile, rename, stat, unlink, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { validateQuote } from './provider.js';
 const DAY=86400000, MINUTE=60000;
 const fail=()=>Error('EODHD unavailable, entitlement missing or invalid data; no raw response logged.');
-const supported=s=>typeof s==='string' && /^[A-Z][A-Z0-9-]{0,14}\.HE$/.test(s) && s.length<=16;
+const supported=eodhdSupported;
 const positive=n=>Number.isFinite(n)&&n>0;
 const fresh=(entry,now,ttl)=>entry && Number.isFinite(entry.at) && entry.at<=now && now-entry.at<ttl;
 export { helsinkiDate } from './helsinki-session.js';
@@ -17,6 +17,7 @@ export class EodhdProvider {
   Object.assign(this,{apiKey,stateDir:resolve(stateDir),dailyLimit,minuteLimit,fetchImpl,now});this.queue=Promise.resolve();
  }
  lookup(symbol,options={}) {
+  symbol=eodhdSymbol(symbol);
   if(!supported(symbol))return Promise.resolve(null);
   const result=this.queue.then(()=>this.locked(symbol,options));this.queue=result.catch(()=>{});return result;
  }
@@ -48,54 +49,57 @@ export class EodhdProvider {
     if(!response.ok)throw fail();return await response.json();
    }catch{throw fail();}
   };
-  const inSession=helsinkiRegularSession(now);
+  const market=marketFor(symbol),suffix=symbol.split('.').at(-1),source=`EODHD ${market.label} delayed quote and raw daily closes`;
+  const date=t=>marketDate(t,symbol);
+  const inSession=marketSession(now,symbol);
+  const metadata=state.metadata?.[suffix]??(suffix==='HE'&&state.metadata?.items?state.metadata:null);
   const existingQuote=Object.hasOwn(state.quotes,symbol)&&state.quotes[symbol];
   // Outside regular hours, retain existing data without spending the tiny budget.
-  const retainClosed=!inSession&&existingQuote&&state.metadata;
+  const retainClosed=!inSession&&existingQuote&&metadata;
   // Fetch both catalogs at most once/day. Exchange suffix alone proves nothing.
-  if(!retainClosed&&!fresh(state.metadata,now,DAY)){
+  if(!retainClosed&&!fresh(metadata,now,DAY)){
    const exchanges=await request('exchanges-list/');
-   const he=Array.isArray(exchanges)&&exchanges.find(x=>x.Code==='HE');
-   if(!he||he.OperatingMIC!=='XHEL'||he.Currency!=='EUR')throw fail();
-   const symbols=await request('exchange-symbol-list/HE');
-   if(!Array.isArray(symbols)||!symbols.length||symbols.length>10000)throw fail();
-   const items={};for(const row of symbols){if(row.Exchange==='HE'&&row.Currency==='EUR'&&supported(row.Code+'.HE')&&typeof row.Name==='string')items[row.Code+'.HE']={name:row.Name.slice(0,120),exchange:'XHEL',currency:'EUR'};}
-   state.metadata={at:now,items};await save();
+   const he=Array.isArray(exchanges)&&exchanges.find(x=>x.Code===suffix);
+   if(!he||he.OperatingMIC!==market.mic||he.Currency!==market.currency)throw fail();
+   const symbols=await request('exchange-symbol-list/'+suffix);
+   if(!Array.isArray(symbols)||!symbols.length||symbols.length>100000)throw fail();
+   const items={};for(const row of symbols){if(row.Exchange===suffix&&row.Currency===market.currency&&supported(row.Code+'.'+suffix)&&typeof row.Name==='string')items[row.Code+'.'+suffix]={name:row.Name.slice(0,120),exchange:market.mic,currency:market.currency};}
+   state.metadata={...state.metadata,[suffix]:{at:now,items}};await save();
   }
-  const item=Object.hasOwn(state.metadata.items,symbol)&&state.metadata.items[symbol];
+  const item=Object.hasOwn((state.metadata[suffix]??metadata).items,symbol)&&(state.metadata[suffix]??metadata).items[symbol];
   if(!item)return null;
-  if(item.exchange!=='XHEL'||item.currency!=='EUR'||typeof item.name!=='string')throw fail();
+  if(item.exchange!==market.mic||item.currency!==market.currency||typeof item.name!=='string')throw fail();
   let quote;
   const cached=Object.hasOwn(state.quotes,symbol)&&state.quotes[symbol];
   // Hourly cache keeps the tiny free budget useful. Source timestamp never changes.
   if(cached&&(!inSession || (fresh(cached,now,60*MINUTE)&&now-Date.parse(cached.quote?.asOf)<65*MINUTE))){
    quote=validateQuote(cached.quote);
-   if(!positive(quote.previousClose)||quote.symbol!==symbol||quote.currency!=='EUR'||quote.exchange!=='XHEL'||quote.fixture!==false||quote.priceKind!=='delayed-quote'||quote.source!=='EODHD Helsinki delayed quote and raw daily closes')throw fail();
+   if(!positive(quote.previousClose)||quote.symbol!==symbol||quote.currency!=='EUR'||quote.exchange!==market.mic||quote.fixture!==false||quote.priceKind!=='delayed-quote'||quote.source!==source)throw fail();
   }else{
    const body=await request('real-time/'+symbol);
    if(body?.code!==symbol||!positive(body.close)||!positive(body.previousClose)||!Number.isInteger(body.timestamp)||body.timestamp<=0||body.timestamp*1000>now+MINUTE)throw fail();
-   quote=validateQuote({symbol,name:item.name,price:body.close,previousClose:body.previousClose,currency:'EUR',exchange:'XHEL',asOf:new Date(body.timestamp*1000).toISOString(),source:'EODHD Helsinki delayed quote and raw daily closes',fixture:false,priceKind:'delayed-quote',history:[]});
+   quote=validateQuote({symbol,name:item.name,price:body.close,previousClose:body.previousClose,currency:'EUR',exchange:market.mic,asOf:new Date(body.timestamp*1000).toISOString(),source,fixture:false,priceKind:'delayed-quote',history:[]});
    state.quotes[symbol]={at:now,quote};await save();
   }
   try{
    const historyKey=symbol+':'+(range==='7d'?'30d':range);
    let daily=Object.hasOwn(state.histories,historyKey)&&state.histories[historyKey];
    // A new Helsinki trading date invalidates yesterday's cached history.
-   if(!daily||(!retainClosed&&(!fresh(daily,now,DAY)||helsinkiDate(daily.at)!==helsinkiDate(now)))){
+   if(!daily||(!retainClosed&&(!fresh(daily,now,DAY)||date(daily.at)!==date(now)))){
     const requestedFrom=rangeStart(range,now);
     const from=range==='7d'||range==='30d'?new Date(now-40*DAY).toISOString().slice(0,10):requestedFrom;
-    const rows=await request('eod/'+symbol,{from,to:helsinkiDate(now),period:'d',order:'a'});
+    const rows=await request('eod/'+symbol,{from,to:date(now),period:'d',order:'a'});
     if(!Array.isArray(rows)||rows.length<2||rows.length>1000)throw fail();
     let previous='';const history=[];const ratios=[];
     for(const row of rows){
-     if(!/^\d{4}-\d{2}-\d{2}$/.test(row.date)||!Number.isFinite(Date.parse(row.date))||new Date(row.date).toISOString().slice(0,10)!==row.date||row.date<=previous||row.date>helsinkiDate(now)||!positive(row.close)||!positive(row.adjusted_close))throw fail();
+     if(!/^\d{4}-\d{2}-\d{2}$/.test(row.date)||!Number.isFinite(Date.parse(row.date))||new Date(row.date).toISOString().slice(0,10)!==row.date||row.date<=previous||row.date>date(now)||!positive(row.close)||!positive(row.adjusted_close))throw fail();
      previous=row.date;history.push({date:row.date,close:row.close});ratios.push(row.adjusted_close/row.close);
     }
     daily={at:now,from,history,corporateAction:ratios.slice(-8).some(r=>Math.abs(r/ratios.at(-1)-1)>0.001)};
     state.histories[historyKey]=daily;await save();
    }
    validateQuote({...quote,history:daily.history,historyKind:'daily-close',historySource:quote.source,historyAsOf:daily.history.at(-1).date+'T00:00:00Z'});
-   const prior=daily.history.filter(p=>p.date<helsinkiDate(Date.parse(quote.asOf)));
+   const prior=daily.history.filter(p=>p.date<date(Date.parse(quote.asOf)));
    const mismatch=!prior.length||Math.abs(prior.at(-1).close/quote.previousClose-1)>0.001;
    return validateQuote({...quote,historyFrom:daily.from,history:daily.history,historyKind:'daily-close',historySource:quote.source,historyAsOf:daily.history.at(-1).date+'T00:00:00Z',moodUnavailable:daily.corporateAction||mismatch?'Corporate action or previous-close/history mismatch':undefined});
   }catch{
@@ -106,5 +110,5 @@ export class EodhdProvider {
 
 export class HelsinkiRouter {
  constructor(usProvider,helsinkiProvider){Object.assign(this,{usProvider,helsinkiProvider});}
- lookup(symbol,options){return symbol.endsWith('.HE')?this.helsinkiProvider.lookup(symbol,options):this.usProvider.lookup(symbol,options);}
+ lookup(symbol,options){return eodhdSupported(symbol)?this.helsinkiProvider.lookup(eodhdSymbol(symbol),options):this.usProvider.lookup(symbol,options);}
 }

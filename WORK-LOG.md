@@ -370,3 +370,13 @@ values and dimensions guards preserved, zero span padded, endpoint/extrema rings
 linear area matches line segments (no fabricated smooth price extrema). Font
 license included, no runtime font/Python dependency. Custom tiny dimensions are
 bounded but are not readability recommendations. No merge/deploy authorization.
+
+Xetra own adversarial review: checked main/branches/open PRs, chart PR#15kept
+separate. Failing-first six-form actual handler test, then canonical alias routing.
+Traced delayed-quote consumers beyond diff: validator,mood,card status,session,
+chart range1yeligibility and attribution, wrappers/config,cache migration/quota.
+Per-exchange metadata, canonical caches alias share, shared rolling20/day lock,
+no arbitrary suffix currencies. Session Berlin DST, wrongMIC/currency/noncanonical
+quote, exact ETFcashtags tests. Existing HE quota/restart/source tests retained.
+No live Slack/provider calls, demo not entitled, no registration.148tests/audit0.
+No merge until owner new yes, no deploy. Source/runtime disclaimer in README.
