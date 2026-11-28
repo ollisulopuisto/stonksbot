@@ -659,3 +659,16 @@ Sources: https://www.alphavantage.co/documentation/ (compact100/free vs full pre
 https://www.alphavantage.co/support/ (25/day),
 https://eodhd.com/financial-apis/api-for-historical-data-and-volumes (pastyear1call),
 https://eodhd.com/pricing (free20/day).
+
+### Midnight chart renderer
+
+Sketch1style: midnight blue, cyan linear line/area gradient, large last close,
+period high/low, currency, source/daily-close/range labels and actual start/end.
+Local3xsupersampling with box downsampling, no added npm/runtime dependency.
+Offline DejaVuSans ASCII glyph atlas is bundled compressed with its license;
+maintainers can regenerate using `python scripts/build-font.py` with Pillow and
+DejaVu installed. Names outside ASCII are transliterated or replaced with `?`.
+Long labels are clipped by glyph width, not wrapped; no external chart service.
+PNG Description metadata retains all previous labels including5scale ticks;
+the visible minimalist card uses3ticks. Fixed640x320logical artboard rescales
+for optional custom dimensions, which may be too small to read comfortably.

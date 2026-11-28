@@ -358,3 +358,15 @@ regression verified extra7dcall and short3day series mislabeled before fix. New
 listing/incomplete7d/30dactual first date>3days after requestedstart is marked
 partial with actual coverage in PNG/title/card, without claiming new-listing
 cause as fact. Long-range coverage refusal unchanged. Local144tests green.
+Midnight renderer: checked main/open PR overlap (only name/ranges), stacked on#13.
+Failing-first dark-background/palette test, then own supersampled local renderer,
+licensed bundled glyph masks, no added runtime deps. Existing flat-scale pixel
+assertion updated to new plot bounds/palette, same padded mapping invariant.
+144tests pass; audit0; diff clean. Inspected actual PNGs for traced demo, flat and
+two-point data, no collisions at640x320. Trace is approximate synthetic fixture,
+not a live quote/provider validation. No dates/data/provider logic changed.
+Own review: fixed surface memory~6MB/output<=4.8MB,1kpoints cap, finite/nonnegative
+values and dimensions guards preserved, zero span padded, endpoint/extrema rings,
+linear area matches line segments (no fabricated smooth price extrema). Font
+license included, no runtime font/Python dependency. Custom tiny dimensions are
+bounded but are not readability recommendations. No merge/deploy authorization.

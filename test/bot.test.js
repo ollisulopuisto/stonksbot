@@ -105,8 +105,8 @@ test('flat history uses the same padded scale for labels and plot', () => {
   let at=8,compressed;
   while(at<png.length){const size=png.readUInt32BE(at),type=png.toString('ascii',at+4,at+8);if(type==='IDAT')compressed=png.subarray(at+8,at+8+size);at+=size+12;}
   const pixels=inflateSync(compressed);
-  const y=Math.round(237-(close-scale.minimum)/(scale.maximum-scale.minimum)*169);
+  const y=Math.round(250-(close-scale.minimum)/(scale.maximum-scale.minimum)*134);
   const index=y*(640*3+1)+1+350*3;
-  assert.deepEqual([...pixels.subarray(index,index+3)],[0,111,145]);
+  assert.deepEqual([...pixels.subarray(index,index+3)],[78,215,249]);
  }
 });
