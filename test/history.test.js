@@ -22,7 +22,7 @@ test('mixed real handler keeps quote and history sources distinct and generates 
  assert.match(JSON.stringify(sent[0].card),/DAILY CLOSE HISTORY \(not live\/intraday\).*Alpha Vantage/);
  assert.equal(sent[0].chartTitle,'AAPL Alpha Vantage daily closes, not live');
  const result=await provider.lookup('AAPL');assert.equal(result.history.at(-1).close,250.12);assert.notEqual(result.history.at(-1).close,result.price);
- assert.ok(sent[0].png.length>1000);await writeFile('/downloads/stonksbot-mixed-chart.png',sent[0].png);
+ assert.ok(sent[0].png.length>1000);await writeFile(join(root,'mixed-chart.png'),sent[0].png);
  // A state directory from the other provider must fail closed, not reuse cache.
  await assert.rejects(new FinnhubProvider({...options,stateDir:join(root,'alpha')}).lookup('AAPL'));
 });

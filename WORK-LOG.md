@@ -162,3 +162,7 @@ whitespace checks pass. Inspected actual synthetic NOKIA.HE640x320PNG pixels:
 EODHD DAILY title, EUR axis/range and dates are readable and not Alpha-branded.
 Added standard Ubuntu Node22test workflow on public repo (no artifacts/paid
 runners); exact PR head CI must be checked separately.
+
+First remote CI exposed an existing test hardcoded to /downloads. Made its
+chart scratch path use the test's temporary directory; no runtime behavior
+change. Re-ran full local suite before updating PR head.
