@@ -9,3 +9,6 @@ test('period-extrema axis keeps ceiling tight, a small lower gutter and readable
   const step=Number((s.ticks[0]-s.ticks[1]).toPrecision(10)),unit=step/10**Math.floor(Math.log10(step));assert.ok([1,2,5,10].some(n=>Math.abs(n-unit)<1e-7));assert.ok(s.ticks.length>=3&&s.ticks.length<=8);assert.equal(new Set(s.ticks.map(s.formatTick)).size,s.ticks.length);
  }
 });
+test('value labels preserve tick precision for cents and tiny price spans',async()=>{
+ const{chartLabels}=await import('../src/chart.js');for(const [lo,hi,expected]of [[.01,.015,'HIGH 0.0150 USD'],[100,100.0005,'HIGH 100.0005 USD']]){const p=[{date:'2026-11-20',close:lo},{date:'2026-11-21',close:hi}];assert.ok(chartLabels(p).includes(expected));}
+});

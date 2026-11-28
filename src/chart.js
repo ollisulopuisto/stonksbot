@@ -30,15 +30,16 @@ export function chartScale(points) {
   const ticks=Array.from({length:last-first+1},(_,i)=>Number(((last-i)*step).toPrecision(14)));
   const decimals=Math.max(0,-Math.floor(Math.log10(step)));
   const formatTick=value=>Math.abs(value)>=1e9?value.toExponential(Math.max(0,Math.ceil(Math.log10(Math.max(Math.abs(minimum),Math.abs(maximum))/step)))):decimals>6?value.toExponential(Math.max(0,Math.ceil(Math.log10(Math.max(Math.abs(minimum),Math.abs(maximum))/step)))):value.toFixed(decimals);
-  return {low,high,minimum,maximum,ticks,formatTick};
+  const formatValue=value=>{const digits=Math.max(2,decimals,value!==0&&Math.abs(value)<1?-Math.floor(Math.log10(Math.abs(value)))+2:2);return digits>8||Math.abs(value)>=1e9?value.toExponential(Math.max(2,Math.ceil(Math.log10(Math.max(Math.abs(minimum),Math.abs(maximum))/step)))):value.toFixed(digits);};
+  return {low,high,minimum,maximum,ticks,formatTick,formatValue};
 }
 // Small local PNG renderer. No chart host or user message leaves this process.
 export function chartLabels(points, {symbol='FIXTURE',currency='USD',fixture=true,historyKind=null,priceKind=null,range=null}={}) {
-  const values=points.map(p=>p.close), { low, high, ticks,formatTick } = chartScale(points);
+  const values=points.map(p=>p.close), { low, high, ticks,formatTick,formatValue } = chartScale(points);
   return [`${symbol} - ${historyKind === 'daily-close' ? (priceKind === 'delayed-quote' ? 'EODHD DAILY' : 'ALPHA VANTAGE DAILY') : fixture?'DEMO FIXTURE':'PROVIDER DATA'}`,`CLOSE / ${currency}${range?' / '+range:''}`,
     ...ticks.map(value=>`${formatTick(value)} ${currency}`),
     ...[points[0],points[Math.floor((points.length-1)/2)],points.at(-1)].map(p=>p.date.slice(0,10)),
-    'DATE',`LAST CLOSE ${priceLabel(values.at(-1))} ${currency}`,`HIGH ${priceLabel(high)} ${currency}`,`LOW ${priceLabel(low)} ${currency}`];
+    'DATE',`LAST CLOSE ${formatValue(values.at(-1))} ${currency}`,`HIGH ${formatValue(high)} ${currency}`,`LOW ${formatValue(low)} ${currency}`];
 }
 export function chartPng(points, width = 640, height = 320, metadata = {}) {
   if (!Number.isInteger(width) || !Number.isInteger(height) || width < 100 || width > 1600 || height < 80 || height > 1000) throw new Error('Invalid chart dimensions');
@@ -50,18 +51,18 @@ export function chartPng(points, width = 640, height = 320, metadata = {}) {
   const dot=(x,y,r,color)=>{for(let dy=-r;dy<=r;dy++)for(let dx=-r;dx<=r;dx++)if(dx*dx+dy*dy<=r*r)pixel(x+dx,y+dy,color);};
   const line=(x1,y1,x2,y2,color,r=2)=>{const steps=Math.ceil(Math.max(Math.abs(x2-x1),Math.abs(y2-y1),1));for(let t=0;t<=steps;t++)dot(x1+(x2-x1)*t/steps,y1+(y2-y1)*t/steps,r,color);};
   const text=(x,y,t,size=12,color=[170,188,208],max=592)=>smoothText(pixel,t,x,y,size,color,max);
-  const values=points.map(p=>p.close),{low,high,minimum,maximum,ticks,formatTick}=chartScale(points),labels=chartLabels(points,metadata);
+  const values=points.map(p=>p.close),{low,high,minimum,maximum,ticks,formatTick,formatValue}=chartScale(points),labels=chartLabels(points,metadata);
   const left=26*3,right=540*3,top=106*3,bottom=250*3,span=maximum-minimum;
   text(24,12,metadata.symbol??'FIXTURE',23,[240,247,255],290);
-  text(330,20,`HIGH ${priceLabel(high)} / LOW ${priceLabel(low)}`,12,[170,188,208],286);
-  const end=text(24,43,priceLabel(values.at(-1)),34,[240,247,255],320);
+  text(330,20,`HIGH ${formatValue(high)} / LOW ${formatValue(low)}`,12,[170,188,208],286);
+  const end=text(24,43,formatValue(values.at(-1)),34,[240,247,255],320);
   text(end+12,67,`${metadata.currency??'USD'} / LAST CLOSE`,11,[170,188,208],280);
   text(26,296,`${metadata.historyKind==='daily-close'?(metadata.priceKind==='delayed-quote'?'EODHD':'ALPHA VANTAGE'):metadata.fixture===false?'PROVIDER DATA':'DEMO FIXTURE'} / DAILY CLOSE${metadata.range?' / '+metadata.range:''}`,11);
   const coords=points.map((p,i)=>[left+i*(right-left)/(points.length-1),bottom-(p.close-minimum)/span*(bottom-top)]);
   for(const value of ticks){const y=bottom-(value-minimum)/span*(bottom-top);line(left,y,562*3,y,[51,69,89],0);if(Math.abs(y-coords.at(-1)[1])>42)text(568,y/3-7,formatTick(value),11,[145,168,192],67);}
   for(let i=1;i<coords.length;i++)line(...coords[i-1],...coords[i],accent,3);
   for(const index of [values.length-1]){const[x,y]=coords[index];dot(x,y,12,accent);dot(x,y,6,bg);}
-  const [lastX,lastY]=coords.at(-1);line(lastX+15,lastY,562*3,lastY,accent,0);text(568,lastY/3-7,priceLabel(values.at(-1)),11,accent,67);
+  const [lastX,lastY]=coords.at(-1);line(lastX+15,lastY,562*3,lastY,accent,0);text(568,lastY/3-7,formatValue(values.at(-1)),11,accent,67);
   text(26,266,points[0].date.slice(0,10),12);text(465,266,points.at(-1).date.slice(0,10),12);
 
   const data=Buffer.alloc(height*(1+width*3));
