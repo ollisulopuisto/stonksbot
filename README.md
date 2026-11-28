@@ -41,7 +41,7 @@ cards remain labelled DEMO. Select a live provider explicitly below; no fallback
 
 The bot reacts to `$AAPL`, not bare AAPL, to avoid ordinary-word false positives.
 It ignores bots, message edits, URLs and code, handles at most three distinct
-symbols per message, and replies in a thread with a card. Fixtures and Alpha Vantage add a local history PNG; Finnhub free
+symbols per message, and replies in the channel with a card by default. Fixtures and Alpha Vantage add a local history PNG; Finnhub free
 quotes have no history of their own; optional Alpha Vantage daily history adds
 a separately labeled chart, never fabricated points. Active work is capped at four messages. Overload is dropped, not queued.
 Event and symbol deduplication lasts ten minutes, in memory, so it resets on
@@ -143,7 +143,7 @@ Delete stored data if your data subscription ends, as Finnhub's terms require.
    Finnish/international coverage; optional EODHD Helsinki mode is described below. Channel restrictions stay mandatory: set
    SLACK_CHANNEL_IDS even when the ticker list is unset.
 4. `npm start` under that environment, then `$AAPL` in the allowed channel.
-   Expect a threaded card with Finnhub source/timestamp. Quotes cached 15 seconds;
+   Expect a channel-level card with Finnhub source/timestamp. Quotes cached 15 seconds;
    market closures can leave older timestamps, flagged stale after 15 minutes.
    Finnhub supplies no free historical candles. With the history configuration
    above, Alpha Vantage supplies up to 100 raw daily closes for a separate chart.
@@ -404,3 +404,19 @@ Official references:
 Closed-market cached quotes older than3elapsed days carry OLD DATA even outside
 regular hours. Existing cache costs no calls after hours, but an uncached symbol
 can still require4initial calls (catalogs2 + quote1 + history1). No holiday feed.
+allation verified.
+
+
+## Reply placement
+
+Cards and daily chart uploads now post at channel level by default, including
+when the ticker request arrived inside a thread. This is intentional: leaving
+STONKSBOT_REPLY_MODE unset selects channel. To retain the old threaded behavior,
+set STONKSBOT_REPLY_MODE=thread. It replies under the incoming thread root when
+present, otherwise under the ticker message. Explicit channel is also accepted;
+any other value (including empty) fails startup. Restart with the new environment.
+This changes reply placement only, not selected channels, data rights, provider
+requests, deduplication or Slack scopes. Only configured SLACK_CHANNEL_IDS apply.
+Card then chart are separate channel posts in channel mode; existing partial
+upload/retry caveat remains. No thread_broadcast or extra notifications API.
+No live Slack client verification, scope change or deployment performed.

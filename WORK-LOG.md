@@ -178,3 +178,22 @@ source recorded. No holiday/half-day calendar, explicitly documented.98tests pas
 Second review: indefinite closed-market cache could hide ancient data. Added
 failing-first22day-old cache test and OLD DATA after3elapsed days, even outside
 hours; no extra calls. Documented uncached after-hours initial4call cost.
+
+
+## 2026-11-28, channel-level replies
+
+Owner asked why responses are threaded. Verified main unconditionally set
+thread_ts to incoming thread root/message and Slack forwarded it, no option.
+Branched independently from main; no overlapping reply-placement PR (EODHD#6
+only touches same handler's unrelated provider title). Added channel default and
+opt-in thread mode, validated at startup and handler construction. Extracted
+real Slack sender for card/upload payload tests, omitting thread_ts entirely in
+channel mode. No channel gate/scopes/provider/quota/dedup change.
+
+Tests first failed without helper, then cover incoming root/thread placement,
+both explicit modes/default, malformed config, and actual postMessage/uploadV2
+payloads. Updated old handler assertions to new default; thread mode separately
+retains parent/root semantics. Own adversarial review traced config -> handler
+-> sender -> card/upload API; preserved threading for both paths, no broadcast.
+Existing history test hardcoded /downloads now uses its test temp directory
+(same portability fix as provider PR). No live Slack/deployment/merge.
