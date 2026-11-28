@@ -12,3 +12,7 @@ test('period-extrema axis keeps ceiling tight, a small lower gutter and readable
 test('value labels preserve tick precision for cents and tiny price spans',async()=>{
  const{chartLabels}=await import('../src/chart.js');for(const [lo,hi,expected]of [[.01,.015,'HIGH 0.0150 USD'],[100,100.0005,'HIGH 100.0005 USD']]){const p=[{date:'2026-11-20',close:lo},{date:'2026-11-21',close:hi}];assert.ok(chartLabels(p).includes(expected));}
 });
+test('calendar date positions preserve weekend gaps and align ticks by range',async()=>{
+ const{dateAxis}=await import('../src/chart-dates.js');const p=['2026-11-20','2026-11-23','2026-11-24'].map(date=>({date,close:100}));const a=dateAxis(p,'7d');assert.deepEqual(a.fractions,[0,.75,1]);assert.deepEqual(a.ticks.map(t=>t.label),['Fri','Mon','Tue']);assert.deepEqual(dateAxis(p,'30d').ticks.map(t=>t.date),['2026-11-23']);
+ const long=[{date:'2025-12-10'},{date:'2026-03-04'}];assert.deepEqual(dateAxis(long,'3m').ticks.map(t=>[t.label,t.year]),[['Jan','2026'],['Feb',null],['Mar',null]]);assert.throws(()=>dateAxis([{date:'bad'}]));assert.throws(()=>dateAxis([{date:'2026-01-02'},{date:'2026-01-01'}]));
+});

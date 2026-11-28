@@ -1,3 +1,4 @@
+import {dateAxis} from './chart-dates.js';
 import { deflateSync } from 'node:zlib';
 import { smoothText } from './chart-font.js';
 
@@ -57,13 +58,15 @@ export function chartPng(points, width = 640, height = 320, metadata = {}) {
   text(330,20,`HIGH ${formatValue(high)} / LOW ${formatValue(low)}`,12,[170,188,208],286);
   const end=text(24,43,formatValue(values.at(-1)),34,[240,247,255],320);
   text(end+12,67,`${metadata.currency??'USD'} / LAST CLOSE`,11,[170,188,208],280);
-  text(26,296,`${metadata.historyKind==='daily-close'?(metadata.priceKind==='delayed-quote'?'EODHD':'ALPHA VANTAGE'):metadata.fixture===false?'PROVIDER DATA':'DEMO FIXTURE'} / DAILY CLOSE${metadata.range?' / '+metadata.range:''}`,11);
-  const coords=points.map((p,i)=>[left+i*(right-left)/(points.length-1),bottom-(p.close-minimum)/span*(bottom-top)]);
-  for(const value of ticks){const y=bottom-(value-minimum)/span*(bottom-top);line(left,y,562*3,y,[51,69,89],0);if(Math.abs(y-coords.at(-1)[1])>42)text(568,y/3-7,formatTick(value),11,[145,168,192],67);}
+  text(26,296,`${metadata.historyKind==='daily-close'?(metadata.priceKind==='delayed-quote'?'EODHD':'ALPHA VANTAGE'):metadata.fixture===false?'PROVIDER DATA':'DEMO FIXTURE'} / DAILY CLOSE${metadata.range?' / '+metadata.range:''} / ${points[0].date} - ${points.at(-1).date}`,11);
+  const dates=dateAxis(points,metadata.range??'30d');
+  const coords=points.map((p,i)=>[left+dates.fractions[i]*(right-left),bottom-(p.close-minimum)/span*(bottom-top)]);
+  for(const tick of dates.ticks){const x=left+tick.fraction*(right-left);line(x,top,x,bottom,[48,65,84],0);text(Math.max(16,x/3-10),263,tick.label,11,[170,188,208],50);if(tick.year)text(Math.max(16,x/3-10),279,tick.year,11);}
+  for(const value of ticks){const y=bottom-(value-minimum)/span*(bottom-top);line(left,y,562*3,y,[65,84,105],0);if(Math.abs(y-coords.at(-1)[1])>42)text(568,y/3-7,formatTick(value),11,[145,168,192],67);}
   for(let i=1;i<coords.length;i++)line(...coords[i-1],...coords[i],accent,3);
   for(const index of [values.length-1]){const[x,y]=coords[index];dot(x,y,12,accent);dot(x,y,6,bg);}
   const [lastX,lastY]=coords.at(-1);line(lastX+15,lastY,562*3,lastY,accent,0);text(568,lastY/3-7,formatValue(values.at(-1)),11,accent,67);
-  text(26,266,points[0].date.slice(0,10),12);text(465,266,points.at(-1).date.slice(0,10),12);
+
 
   const data=Buffer.alloc(height*(1+width*3));
   // Box integration preserves edge coverage for both standard and custom sizes.

@@ -381,3 +381,10 @@ ceiling still visible with plot margin, helper lines drawn behind cyan line but
 not obscured by fill. Actual pixels inspected normal/flat/two-point/tiny/zero,
 last label avoids adjacent tick, no collisions at640x320. Synthetic META data,
 not original screenshot exact samples. No merge/deploy until new yes.
+
+Calendar-axis approved prototype follow-up: real-date spacing, Mondays/weekday/
+monthstartticks, January year, actual coverage footer. Both guide directions
+stronger but behind line.149tests pass (weekend3:1gap,tick dates,year rollover,
+invalid/reversed dates), actual pixels inspected30d/7d/1y/partial. Prototype file
+untracked and not committed. No provider changes. Own review traced dates into
+coords, ticks, endpoint marker and labels; no point-index/date-position mismatch.

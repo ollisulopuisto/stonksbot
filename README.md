@@ -686,3 +686,10 @@ labels suppressed. Exact high/low stay in the header; source/range appears once
 in the footer. Normal values use2decimals, sub-cent values retain useful digits.
 The renderer keeps a fixed640x320logical artboard, so custom tiny output can be
 unreadable. Tick count targets four intervals (typically3-6labels).
+
+Calendar axis: xpositions use actual UTC dates (Friday-to-Monday has a3daygap),
+not trading-session index.30dticks are Mondays,7dticks weekdays,3m/1yticks month
+starts, year beneath January. Stronger horizontal and slightly lighter vertical
+guides are behind the line. Footer states actual coverage, including partial data.
+No invented weekend points, straight connections only. Date-axis loop bounded
+at1001calendar days, input dates must increase. Custom tiny output remains caveat.
