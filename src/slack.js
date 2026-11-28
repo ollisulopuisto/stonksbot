@@ -1,3 +1,4 @@
+import { reactionOptions, slackReactor } from './reactions.js';
 import { slackSender } from './slack-send.js';
 import { App } from '@slack/bolt';
 import { configuredProvider } from './config.js';
@@ -12,6 +13,8 @@ const app = new App({ token: process.env.SLACK_BOT_TOKEN, appToken: process.env.
 const handler = createHandler({
   provider,
   mood: moodOptions(),
+  ...reactionOptions(),
+  react: slackReactor(app.client),
   ...replyOptions(),
   onError: () => console.error('Quote handling failed; no raw provider payload logged.'),
   send: slackSender(app.client),

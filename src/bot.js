@@ -47,9 +47,10 @@ export function replyOptions(env = process.env) {
  if(!['channel','thread'].includes(replyMode)) throw Error('STONKSBOT_REPLY_MODE must be channel or thread.');
  return {replyMode};
 }
-export function createHandler({ provider, send, now = Date.now, onError = () => {}, mood = {}, replyMode = 'channel' }) {
+export function createHandler({ provider, send, now = Date.now, onError = () => {}, mood = {}, replyMode = 'channel', react = async () => {}, reactionNames = {over:'over',back:'back'} }) {
  replyOptions({STONKSBOT_REPLY_MODE:replyMode});
   const delivered = new Map();
+  const reacted = new Map();
   const inFlight = new Set();
   let active = 0;
   return async event => {
@@ -59,6 +60,7 @@ export function createHandler({ provider, send, now = Date.now, onError = () => 
     if (!symbols.length) return;
     const key = `${event.channel}:${event.ts}`;
     const time = now();
+    for(const [k,until] of reacted)if(until<=time)reacted.delete(k);
     for (const [k, until] of delivered) if (until <= time) delivered.delete(k);
     if (delivered.has(key) || inFlight.has(key) || active >= 4) return;
     inFlight.add(key); active++;
@@ -68,6 +70,14 @@ export function createHandler({ provider, send, now = Date.now, onError = () => 
         if (delivered.has(symbolKey)) continue;
         const quote = await provider.lookup(symbol);
         if (!quote) continue;
+        // Independent of card posting, and only uses this same provider result.
+        const verdict=quote.fixture?null:evaluateMood(quote,now(),mood);
+        const reaction=verdict?.label === "We're back" ? reactionNames.back : verdict?.label === "It's over" ? reactionNames.over : null;
+        const reactionKey=`${key}:${reaction}`;
+        if(reaction && !reacted.has(reactionKey)) {
+          try { await react({channel:event.channel,timestamp:event.ts,name:reaction});reacted.set(reactionKey,now()+10*60_000);if(reacted.size>500)reacted.delete(reacted.keys().next().value); }
+          catch { onError(Error('Slack reaction failed; card posting continues.')); }
+        }
         const card = buildCard(quote, now(), mood, questions.has(symbol));
         await send({ channel: event.channel, ...(replyMode === 'thread' ? { thread_ts: /^\d+\.\d+$/.test(event.thread_ts ?? '') ? event.thread_ts : event.ts } : {}), symbol, card, chartTitle: quote.historyKind === 'daily-close' ? `${symbol} ${quote.priceKind === 'delayed-quote' ? 'EODHD' : 'Alpha Vantage'} daily closes, not live${quote.priceKind === 'us-quote' ? '; quote: Finnhub' : ''}` : quote.fixture ? `${symbol} DEMO fixture history` : `${symbol} daily close history`, png: quote.history.length >= 2 ? chartPng(quote.history,640,320,{ ...quote, historyKind: quote.historyKind }) : null });
         delivered.set(symbolKey, now() + 10 * 60_000);

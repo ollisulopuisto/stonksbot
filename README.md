@@ -447,3 +447,27 @@ to the ticker: its daily endpoint has no full name, and no extra search call is
 made against its25/day budget. Full name means the provider's name, not an invented
 shortened brand. Relative daily age describes the date marker, not exact close
 execution time. No API keys or live provider/Slack tests used.
+
+## Independent mood emoji reactions
+
+Any accepted $TICKER message (not just a mood question) receives :back: for a
+triggered positive mood or :over: for a triggered negative mood. No reaction for
+unavailable/no-trigger/demo/stale results. These are CUSTOM workspace emoji names,
+not built-in defaults: create/upload the intended over/back emoji yourself, or set
+STONKSBOT_REACTION_OVER and STONKSBOT_REACTION_BACK to existing emoji names without
+colons. The app does not create emoji. Add bot OAuth scope reactions:write and
+reinstall the app. Existing message.channels/channel history and message.groups/
+group history subscriptions/scopes still determine visibility, only configured
+SLACK_CHANNEL_IDS. No reaction_added subscription or reactions:read required.
+
+Reaction targets the ORIGINAL ticker message, not its thread root or the bot's
+reply. Card posting and reactions fail independently. Both reuse the same quote
+and mood evaluation, no extra provider call. Multiple symbols can add both emoji
+when verdicts differ, with at most one of each name per message. Slack
+already_reacted counts as success. Missing/custom emoji or scope failure emits
+only safe setup guidance, card still posts, no automatic retry. Reaction success
+survives card retry in memory10min, not restart; Slack prevents duplicate bot
+reactions. No message edits/bot messages, bare-word ticker scanning or background
+monitor. Posting can fail while reaction succeeds. Existing delivery caveats
+remain. No live Slack, emoji creation, installation or scope changes performed.
+https://docs.slack.dev/reference/methods/reactions.add/

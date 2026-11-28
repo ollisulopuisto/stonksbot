@@ -222,3 +222,19 @@ provider names control/bidi/whitespace with regression coverage. Direct question
 no-trigger gets a brief answer; unavailable stays silent per owner pending any
 approved exception. Chart upload title now also identifies Finnhub quote source
 alongside Alpha daily series. Combined107tests pass.
+
+## 2026-11-28, independent mood reactions
+
+Owner requested over/back on any cashtag message separate from posted reply.
+Checked current main/recent PRs: provider/placement/compact cards are separate,
+no existing reaction implementation. Added optional reaction callback to handler,
+using same quote/evaluator, original message timestamp, triggered verdict only.
+Slack wrapper calls reactions.add, treats already_reacted as success, no raw
+error logging. Custom over/back names configurable/validated, no emoji creation.
+
+Tests first failed without helper. Own review traced message/channel filters ->
+one quote -> mood -> reaction name+original timestamp -> failure isolation ->
+card posting and dedup. Success dedup retained separately so card retry cannot
+re-add reaction, each name once/message across symbols. Scope reactions:write
+and existing message events documented; no reaction event subscription needed.
+No live account/key/provider/Slack, permissions changes, deployment or merge.
