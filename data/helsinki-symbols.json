@@ -1,0 +1,1055 @@
+{
+  "source": "https://huggingface.co/datasets/kjhq/Finland-Stock-Symbols-and-Metadata",
+  "revision": "152b96ae7c67a2b30c56b30e2e4ae6b3f94f3a63",
+  "sourceDate": "2025-09-20",
+  "license": "CC0-1.0",
+  "retrieved": "2026-11-28",
+  "usCollisionSource": "https://www.nasdaqtrader.com/dynamic/SymDir/nasdaqtraded.txt",
+  "usSnapshotFooter": "File Creation Time: 1127202621:34|||||",
+  "entries": [
+    {
+      "symbol": "AALLON",
+      "name": "Aallon Group Oyj",
+      "route": "AALLON.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "ACG1V",
+      "name": "Aspocomp Group Oyj",
+      "route": "ACG1V.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "ADMCM",
+      "name": "Admicom Oyj",
+      "route": "ADMCM.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "ADMIN",
+      "name": "Administer PLC",
+      "route": "ADMIN.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "AFAGR",
+      "name": "Afarak Group SE Class A",
+      "route": "AFAGR.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "AIFORIA",
+      "name": "Aiforia Technologies Oy Class A",
+      "route": "AIFORIA.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "AKTIA",
+      "name": "Aktia Bank Plc Class A",
+      "route": "AKTIA.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "ALBAV",
+      "name": "Alandsbanken Abp Class A",
+      "route": "ALBAV.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "ALEX",
+      "name": "Alexandria Group Oyj",
+      "route": "ALEX.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "ALISA",
+      "name": "Alisa Pankki Oyj",
+      "route": "ALISA.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "ALMA",
+      "name": "Alma Media Oyj",
+      "route": "ALMA.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "ANORA",
+      "name": "Anora Group Oyj",
+      "route": "ANORA.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "APETIT",
+      "name": "Apetit Oyj",
+      "route": "APETIT.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "ARVOSK",
+      "name": "Arvo Sijoitusosuuskunta",
+      "route": "ARVOSK.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "ASPO",
+      "name": "Aspo Plc",
+      "route": "ASPO.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "ASUNTO",
+      "name": "Asuntosalkku Oy Class A",
+      "route": "ASUNTO.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "ATRAV",
+      "name": "Atria Oyj Class A",
+      "route": "ATRAV.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "BEER",
+      "name": "Nokian Panimo Oyj",
+      "route": "BEER.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "BETOLAR",
+      "name": "Betolar Oyj",
+      "route": "BETOLAR.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "BIOBV",
+      "name": "Biohit Oyj Class B",
+      "route": "BIOBV.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "BITTI",
+      "name": "Bittium Corporation",
+      "route": "BITTI.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "BOREO",
+      "name": "Boreo Oyj",
+      "route": "BOREO.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "BRETEC",
+      "name": "Bioretec Ltd.",
+      "route": "BRETEC.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "CANATU",
+      "name": "CANATU PLC",
+      "route": "CANATU.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "CAPMAN",
+      "name": "CapMan Oyj Class B",
+      "route": "CAPMAN.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "CONSTI",
+      "name": "Consti Oyj",
+      "route": "CONSTI.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "CTH1V",
+      "name": "Componenta Oyj",
+      "route": "CTH1V.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "CTY1S",
+      "name": "Citycon Oyj",
+      "route": "CTY1S.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "DETEC",
+      "name": "Detection Technology Oy",
+      "route": "DETEC.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "DIGIA",
+      "name": "Digia Oyj",
+      "route": "DIGIA.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "DIGIGR",
+      "name": "Digitalist Group Oyj",
+      "route": "DIGIGR.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "DOV1V",
+      "name": "Dovre Group Plc",
+      "route": "DOV1V.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "DUELL",
+      "name": "Duell Oyj",
+      "route": "DUELL.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "DWF",
+      "name": "Digital Workforce Services Oyj",
+      "route": "DWF.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "EAGLE",
+      "name": "Eagle Filters Group Plc Class A",
+      "route": "EAGLE.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "ECOUP",
+      "name": "EcoUp Oyj",
+      "route": "ECOUP.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "EEZY",
+      "name": "Eezy Oyj",
+      "route": "EEZY.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "ELEAV",
+      "name": "Elecster Oyj Class A",
+      "route": "ELEAV.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "ELISA",
+      "name": "Elisa Oyj Class A",
+      "route": "ELISA.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "ENENTO",
+      "name": "Enento Group Oyj",
+      "route": "ENENTO.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "EQV1V",
+      "name": "eQ Oyj",
+      "route": "EQV1V.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "ESENSE",
+      "name": "Enersense International Oyj",
+      "route": "ESENSE.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "ETTE",
+      "name": "Etteplan Oyj",
+      "route": "ETTE.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "EVLI",
+      "name": "Evli Plc Class B",
+      "route": "EVLI.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "EXL1V",
+      "name": "Exel Composites Oyj",
+      "route": "EXL1V.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "FIA1S",
+      "name": "Finnair Oyj",
+      "route": "FIA1S.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "FODELIA",
+      "name": "Fodelia Oyj",
+      "route": "FODELIA.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "FONDIA",
+      "name": "Fondia Oyj",
+      "route": "FONDIA.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "FORTUM",
+      "name": "Fortum Oyj",
+      "route": "FORTUM.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "FSECURE",
+      "name": "F-Secure Oyj",
+      "route": "FSECURE.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "FSKRS",
+      "name": "Fiskars Oyj Abp",
+      "route": "FSKRS.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "GLA1V",
+      "name": "Glaston Oyj",
+      "route": "GLA1V.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "GOFORE",
+      "name": "Gofore Plc",
+      "route": "GOFORE.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "GRK",
+      "name": "GRK Infra Plc",
+      "route": "GRK.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "HARVIA",
+      "name": "Harvia Oyj",
+      "route": "HARVIA.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "HEALTH",
+      "name": "Nightingale Health Oyj Class B",
+      "route": "HEALTH.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "HIAB",
+      "name": "Hiab Oyj Class B",
+      "route": "HIAB.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "HKFOODS",
+      "name": "HKFoods Oyj Class A",
+      "route": "HKFOODS.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "HONBS",
+      "name": "Honkarakenne Oyj Class B",
+      "route": "HONBS.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "HRTIS",
+      "name": "Herantis Pharma Plc",
+      "route": "HRTIS.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "HUH1V",
+      "name": "Huhtamaki Oyj",
+      "route": "HUH1V.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "ICP1V",
+      "name": "Incap Oyj",
+      "route": "ICP1V.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "ILKKA1",
+      "name": "Ilkka Oyj TEMP",
+      "route": "ILKKA1.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "INDERES",
+      "name": "Inderes Oyj",
+      "route": "INDERES.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "INVEST",
+      "name": "Investors House Oyj",
+      "route": "INVEST.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "KALMAR",
+      "name": "Kalmar Corporation Class B",
+      "route": "KALMAR.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "KAMUX",
+      "name": "Kamux Oyj",
+      "route": "KAMUX.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "KCR",
+      "name": "Konecranes Oyj",
+      "route": "KCR.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "KELAS",
+      "name": "Kesla Oyj Class A",
+      "route": "KELAS.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "KEMIRA",
+      "name": "Kemira Oyj",
+      "route": "KEMIRA.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "KEMPOWR",
+      "name": "Kempower Oy",
+      "route": "KEMPOWR.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "KESKOA",
+      "name": "Kesko Oyj Class A",
+      "route": "KESKOA.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "KHG",
+      "name": "KH Group Plc",
+      "route": "KHG.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "KNEBV",
+      "name": "KONE Oyj Class B",
+      "route": "KNEBV.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "KOJAMO",
+      "name": "Kojamo Oyj",
+      "route": "KOJAMO.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "KOSKI",
+      "name": "Koskisen Oyj",
+      "route": "KOSKI.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "KREATE",
+      "name": "Kreate Group Plc",
+      "route": "KREATE.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "KSL",
+      "name": "Keskisuomalainen Oyj Class A",
+      "route": "KSL.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "LAMOR",
+      "name": "Lamor Corporation Oyj",
+      "route": "LAMOR.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "LAPWALL",
+      "name": "LapWall Oyj",
+      "route": "LAPWALL.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "LAT1V",
+      "name": "Lassila & Tikanoja Oyj",
+      "route": "LAT1V.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "LEADD",
+      "name": "LeadDesk Oyj",
+      "route": "LEADD.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "LEMON",
+      "name": "Lemonsoft Oyj",
+      "route": "LEMON.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "LINDEX",
+      "name": "Lindex Group plc Class B",
+      "route": "LINDEX.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "LOIHDE",
+      "name": "Loihde Oyj",
+      "route": "LOIHDE.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "MANTA",
+      "name": "Mandatum Oyj",
+      "route": "MANTA.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "MARAS",
+      "name": "Martela Oyj Class A",
+      "route": "MARAS.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "MEKKO",
+      "name": "Marimekko Oyj",
+      "route": "MEKKO.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "MERUS",
+      "name": "Merus Power Plc Class A",
+      "route": "MERUS.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "METSA",
+      "name": "Metsa Board Oyj Class A",
+      "route": "METSA.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "METSO",
+      "name": "Metso Corporation",
+      "route": "METSO.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "MODU",
+      "name": "Modulight Oyj",
+      "route": "MODU.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "MUSTI",
+      "name": "Musti Group Oyj",
+      "route": "MUSTI.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "NANOFH",
+      "name": "Nanoform Finland Oyj",
+      "route": "NANOFH.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "NDA-FI",
+      "name": "Nordea Bank Abp",
+      "route": "NDA-FI.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "NESTE",
+      "name": "Neste Corporation",
+      "route": "NESTE.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "NETUM",
+      "name": "Netum Group Oyj",
+      "route": "NETUM.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "NLG1V",
+      "name": "Nurminen Logistics Oyj Class A",
+      "route": "NLG1V.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "NOHO",
+      "name": "NoHo Partners Plc",
+      "route": "NOHO.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "NOKIA",
+      "name": "Nokia Oyj",
+      "route": "NOKIA.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "NORRH",
+      "name": "Norrhydro Group Oy",
+      "route": "NORRH.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "NXTMH",
+      "name": "Nexstim PLC",
+      "route": "NXTMH.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "OLVAS",
+      "name": "Olvi Oyj Class A",
+      "route": "OLVAS.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "OMASP",
+      "name": "Oma Savings Bank Plc",
+      "route": "OMASP.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "OPTOMED",
+      "name": "Optomed Oyj Class A",
+      "route": "OPTOMED.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "ORIOLA",
+      "name": "Oriola Corp Class B",
+      "route": "ORIOLA.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "ORNAV",
+      "name": "Orion Oyj Class A",
+      "route": "ORNAV.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "ORTHEX",
+      "name": "Orthex Oyj",
+      "route": "ORTHEX.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "OUT1V",
+      "name": "Outokumpu Oyj",
+      "route": "OUT1V.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "OVARO",
+      "name": "Ovaro Kiinteistosijoitus Oyj",
+      "route": "OVARO.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "PALLAS",
+      "name": "Pallas Air Plc",
+      "route": "PALLAS.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "PAMPALO",
+      "name": "Endomines Finland Oyj",
+      "route": "PAMPALO.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "PARTNE1",
+      "name": "Partnera Oyj",
+      "route": "PARTNE1.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "PIHLIS",
+      "name": "Pihlajalinna Plc",
+      "route": "PIHLIS.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "PIIPPO",
+      "name": "Piippo Oyj",
+      "route": "PIIPPO.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "PNA1V",
+      "name": "Panostaja Oyj",
+      "route": "PNA1V.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "PON1V",
+      "name": "Ponsse Oyj",
+      "route": "PON1V.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "PUUILO",
+      "name": "Puuilo Oyj",
+      "route": "PUUILO.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "QPR1V",
+      "name": "QPR Software Oyj",
+      "route": "QPR1V.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "QTCOM",
+      "name": "Qt Group Plc",
+      "route": "QTCOM.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "RAIKV",
+      "name": "Raisio Plc Class K",
+      "route": "RAIKV.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "RAP1V",
+      "name": "Rapala VMC Oyj",
+      "route": "RAP1V.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "RAUTE",
+      "name": "Raute Oyj Class A",
+      "route": "RAUTE.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "REBL",
+      "name": "Rebl Group Oyj",
+      "route": "REBL.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "REG1V",
+      "name": "Revenio Group Oyj",
+      "route": "REG1V.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "REKA",
+      "name": "Reka Industrial Plc Class B",
+      "route": "REKA.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "RELAIS",
+      "name": "Relais Group Oyj",
+      "route": "RELAIS.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "REMEDY",
+      "name": "Remedy Entertainment Oy",
+      "route": "REMEDY.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "ROBIT",
+      "name": "Robit PLC",
+      "route": "ROBIT.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "SAGCV",
+      "name": "Saga Furs Oyj Class C",
+      "route": "SAGCV.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "SAMPO",
+      "name": "Sampo Oyj",
+      "route": "SAMPO.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "SANOMA",
+      "name": "Sanoma Oyj",
+      "route": "SANOMA.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "SBI",
+      "name": "Sunborn International Plc",
+      "route": "SBI.HE",
+      "ambiguous": true
+    },
+    {
+      "symbol": "SCANFL",
+      "name": "Scanfil Oyj",
+      "route": "SCANFL.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "SFOODS",
+      "name": "Solar Foods Oyj Class K",
+      "route": "SFOODS.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "SIILI",
+      "name": "Siili Solutions Oy",
+      "route": "SIILI.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "SITOWS",
+      "name": "Sitowise Group Oyj",
+      "route": "SITOWS.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "SOLTEQ",
+      "name": "Solteq Oyj",
+      "route": "SOLTEQ.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "SOLWERS",
+      "name": "Solwers Oyj",
+      "route": "SOLWERS.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "SPINN",
+      "name": "Spinnova Oy",
+      "route": "SPINN.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "SPRING",
+      "name": "Springvest Oy",
+      "route": "SPRING.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "SRV1V",
+      "name": "SRV Yhtiot Oyj",
+      "route": "SRV1V.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "SSH1V",
+      "name": "SSH Communications Security Oyj",
+      "route": "SSH1V.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "STEAV",
+      "name": "Stora Enso Oyj Class A",
+      "route": "STEAV.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "SUMMA",
+      "name": "Summa Defence Plc Class A",
+      "route": "SUMMA.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "SUY1V",
+      "name": "Suominen Oyj",
+      "route": "SUY1V.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "TAALA",
+      "name": "Taaleri Plc",
+      "route": "TAALA.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "TAMTRON",
+      "name": "Tamtron Group Oyj",
+      "route": "TAMTRON.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "TEKOVA",
+      "name": "Tekova Oyj",
+      "route": "TEKOVA.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "TEM1V",
+      "name": "Tecnotree Oyj",
+      "route": "TEM1V.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "TIETO",
+      "name": "TietoEVRY Oyj",
+      "route": "TIETO.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "TITAN",
+      "name": "Titanium Oyj",
+      "route": "TITAN.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "TLT1V",
+      "name": "Teleste Corporation",
+      "route": "TLT1V.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "TNOM",
+      "name": "Talenom Oyj",
+      "route": "TNOM.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "TOIVO",
+      "name": "Toivo Group Oyj",
+      "route": "TOIVO.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "TOKMAN",
+      "name": "Tokmanni Group Oyj",
+      "route": "TOKMAN.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "TRH1V",
+      "name": "Trainers' House Oyj",
+      "route": "TRH1V.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "TTALO",
+      "name": "Terveystalo Oy Class A",
+      "route": "TTALO.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "TULAV",
+      "name": "Tulikivi Oyj Class A",
+      "route": "TULAV.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "TYRES",
+      "name": "Nokian Renkaat Oyj",
+      "route": "TYRES.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "UNITED",
+      "name": "United Bankers Oyj Class A",
+      "route": "UNITED.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "UPM",
+      "name": "UPM-Kymmene Oyj",
+      "route": "UPM.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "VAIAS",
+      "name": "Vaisala Oyj Class A",
+      "route": "VAIAS.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "VALMT",
+      "name": "Valmet Corp",
+      "route": "VALMT.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "VERK",
+      "name": "Verkkokauppa.com Oyj",
+      "route": "VERK.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "VIAFIN",
+      "name": "Viafin Service Oyj",
+      "route": "VIAFIN.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "VIK1V",
+      "name": "Viking Line Abp",
+      "route": "VIK1V.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "VINCIT",
+      "name": "Vincit Oyj",
+      "route": "VINCIT.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "WETTERI",
+      "name": "Wetteri Oyj",
+      "route": "WETTERI.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "WITH",
+      "name": "WithSecure Corporation",
+      "route": "WITH.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "WITTED",
+      "name": "Witted Megacorp Oy",
+      "route": "WITTED.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "WRT1V",
+      "name": "Wartsila Oyj Abp",
+      "route": "WRT1V.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "WUF1V",
+      "name": "Wulff-Yhtiot Oyj",
+      "route": "WUF1V.HE",
+      "ambiguous": false
+    },
+    {
+      "symbol": "YIT",
+      "name": "YIT Oyj",
+      "route": "YIT.HE",
+      "ambiguous": false
+    }
+  ]
+}

@@ -1,12 +1,12 @@
 import { reactionOptions, slackReactor } from './reactions.js';
 import { slackSender } from './slack-send.js';
 import { App } from '@slack/bolt';
-import { configuredProvider } from './config.js';
+import { startupProvider } from './config.js';
 import { createHandler, replyOptions } from './bot.js';
 import { moodOptions } from './mood.js';
 import { allowedChannels, channelHandler, joinAllowedPublicChannels } from './slack-events.js';
 
-const provider = configuredProvider();
+const provider = await startupProvider();
 if (!process.env.SLACK_BOT_TOKEN || !process.env.SLACK_APP_TOKEN) throw new Error('Slack bot and Socket Mode app tokens are required.');
 const channels = allowedChannels(process.env.SLACK_CHANNEL_IDS);
 const app = new App({ token: process.env.SLACK_BOT_TOKEN, appToken: process.env.SLACK_APP_TOKEN, socketMode: true });

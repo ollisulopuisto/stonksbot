@@ -266,3 +266,32 @@ Independent review: Alpha name-only Note/Information should not stop all daily
 quotes. Failing-first test, then keep name miss cached24h without global pause;
 HTTP429still blocks shared quota. Test refreshes quote7h later with no repeated
 metadata call. No live traffic, existing quote-endpoint notices still pause.
+
+## 2026-11-28, bare Helsinki ticker mapping
+
+Owner rejected suffix requirement and asked for static app/config lookup table.
+Discarded dynamic-resolution prototype before PR. Checked fresh main e5ed005/open
+PRs/branches, no overlapping bare routing. Bundled174CC0 source entries, actual
+source date2025-09-20, retrieved2026-11-28, pinned revision in JSON/README. Official
+Nasdaq US directory snapshot2026-11-27 21:34overlap SBI only; NOKIA Helsinki, NOK US.
+Source age accepted by owner via parent, quote-time metadata validation unchanged.
+
+Static startup Map plus validated optional override file, no resolution API calls.
+Table hits canonical .HE, collision notice no quote/reaction, misses original US
+path with persistent24h negative-result/error cache to stop repeated probes.
+Explicit .HE/.US supported. EODHD-only uses static table without US provider.
+Unchanged provider quotas/identity/cache, no live quotes or key. Offline refresh
+script consumes reviewed downloads, computes collisions and validates rows.
+
+New tests failed before routing implementation. Own review traced extraction ->
+startup file/table -> canonical provider route -> same-feed quote/history/mood ->
+card/upload/react and notice paths. Tested collision/explicit venue, source count,
+no resolution methods called, restart negative cache, add/replace/remove override
+and malformed config. Source stale/new OTC collisions remain a disclosed risk.
+No deploy/merge; this PR explicitly waits for owner's new yes despite older grant.
+
+Reviewer follow-up: transient thrown US errors no longer cached24h. Failing-first
+recovering-provider test, then15min cooldown for thrown failures vs24h clean null.
+Corrupt/future/old-schema miss entries discarded and persisted clean on next
+lookup, never touch provider quota state. Tests for corrupt/future JSON and
+recovery after15min pass. No merge, owner yes still required.
