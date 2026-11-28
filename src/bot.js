@@ -10,7 +10,7 @@ const safe = text => String(text).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '
 export function buildCard(quote, now = Date.now()) {
   validateQuote(quote);
   const age = now - Date.parse(quote.asOf);
-  const status = quote.fixture ? 'DEMO FIXTURE, not a live price' : quote.priceKind === 'daily-close' ? `DAILY CLOSE, not a live price; UTC timestamp denotes trading date only${age > 4 * 86400000 ? '; OLD DATA: more than 4 days old' : ''}` : age < -60_000 ? 'INVALID FUTURE TIMESTAMP, not a current quote' : age > 15 * 60_000 ? 'STALE, not a current quote' : 'Provider quote, may be delayed';
+  const status = quote.fixture ? 'DEMO FIXTURE, not a live price' : quote.priceKind === 'daily-close' ? `DAILY CLOSE, not a live price; UTC timestamp denotes trading date only${age > 4 * 86400000 ? '; OLD DATA: more than 4 days old' : ''}` : age < -60_000 ? 'INVALID FUTURE TIMESTAMP, not a current quote' : age > 15 * 60_000 ? 'STALE, not a current quote' : quote.priceKind === 'us-quote' ? 'REAL-TIME US QUOTE, on demand; may be cached up to 15 seconds' : 'Provider quote, may be delayed';
   const prices = quote.history.map(p => p.close);
   const summary = `${quote.symbol}: ${quote.price.toFixed(2)} ${quote.currency}. ${status}. As of ${quote.asOf}.`;
   return {
@@ -19,7 +19,7 @@ export function buildCard(quote, now = Date.now()) {
       { type: 'header', text: { type: 'plain_text', text: `${quote.symbol} · ${quote.name}`.slice(0, 150), emoji: false } },
       { type: 'section', text: { type: 'plain_text', text: `${quote.price.toFixed(2)} ${quote.currency}\n${status}`, emoji: false } },
       { type: 'context', elements: [{ type: 'mrkdwn', text: `Source: ${safe(quote.source)} | As of ${safe(quote.asOf)}` }] },
-      { type: 'section', text: { type: 'plain_text', text: `History: ${quote.history[0].date} to ${quote.history.at(-1).date}\nClose range: ${Math.min(...prices).toFixed(2)}–${Math.max(...prices).toFixed(2)} ${quote.currency}. Line chart, equally spaced observations, vertical range shown here.`, emoji: false } },
+      ...(quote.history.length ? [{ type: 'section', text: { type: 'plain_text', text: `History: ${quote.history[0].date} to ${quote.history.at(-1).date}\nClose range: ${Math.min(...prices).toFixed(2)}–${Math.max(...prices).toFixed(2)} ${quote.currency}. Line chart, equally spaced observations, vertical range shown here.`, emoji: false } }] : [{ type: 'context', elements: [{ type: 'plain_text', text: 'No history chart: Finnhub free quotes do not include historical candles.' }] }]),
     ],
   };
 }
@@ -44,7 +44,7 @@ export function createHandler({ provider, send, now = Date.now, onError = () => 
         const quote = await provider.lookup(symbol);
         if (!quote) continue;
         const card = buildCard(quote, now());
-        await send({ channel: event.channel, thread_ts: /^\d+\.\d+$/.test(event.thread_ts ?? '') ? event.thread_ts : event.ts, symbol, card, png: chartPng(quote.history,640,320,quote) });
+        await send({ channel: event.channel, thread_ts: /^\d+\.\d+$/.test(event.thread_ts ?? '') ? event.thread_ts : event.ts, symbol, card, png: quote.history.length >= 2 ? chartPng(quote.history,640,320,quote) : null });
         delivered.set(symbolKey, now() + 10 * 60_000);
       }
       delivered.set(key, now() + 10 * 60_000);
