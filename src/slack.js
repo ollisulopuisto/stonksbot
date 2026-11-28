@@ -10,9 +10,9 @@ const app = new App({ token: process.env.SLACK_BOT_TOKEN, appToken: process.env.
 const handler = createHandler({
   provider,
   onError: () => console.error('Quote handling failed; no raw provider payload logged.'),
-  send: async ({ channel, thread_ts, symbol, card, png }) => {
+  send: async ({ channel, thread_ts, symbol, card, png, chartTitle }) => {
     await app.client.chat.postMessage({ channel, thread_ts, ...card, unfurl_links: false, unfurl_media: false });
-    if (png) await app.client.files.uploadV2({ channel_id: channel, thread_ts, file: png, filename: `${symbol}-history.png`, title: `${symbol} ${process.env.STONKSBOT_PROVIDER === 'alpha-vantage' ? 'daily close' : 'DEMO fixture'} history` });
+    if (png) await app.client.files.uploadV2({ channel_id: channel, thread_ts, file: png, filename: `${symbol}-history.png`, title: chartTitle });
   },
 });
 app.message(async ({ message }) => { if (channels.has(message.channel)) await handler(message); });

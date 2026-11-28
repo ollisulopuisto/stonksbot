@@ -39,7 +39,8 @@ cards remain labelled DEMO. Select a live provider explicitly below; no fallback
 The bot reacts to `$AAPL`, not bare AAPL, to avoid ordinary-word false positives.
 It ignores bots, message edits, URLs and code, handles at most three distinct
 symbols per message, and replies in a thread with a card. Fixtures and Alpha Vantage add a local history PNG; Finnhub free
-quotes have no history, so no chart is fabricated or uploaded. Active work is capped at four messages. Overload is dropped, not queued.
+quotes have no history of their own; optional Alpha Vantage daily history adds
+a separately labeled chart, never fabricated points. Active work is capped at four messages. Overload is dropped, not queued.
 Event and symbol deduplication lasts ten minutes, in memory, so it resets on
 restart. Multi-instance deduplication is not implemented. If a Slack card posts
 but its PNG upload fails, retry can duplicate the card. No delivery guarantee.
@@ -96,7 +97,7 @@ Delete stored data if your data subscription ends, as Finnhub's terms require.
 
 1. Create a Slack app, enable Socket Mode, generate an app token with
    `connections:write`. Bot scopes: `chat:write` and `groups:history` for a private
-   channel, plus `files:write` only for fixture/Alpha Vantage chart uploads.
+   channel, plus `files:write` for the Alpha Vantage chart uploads configured below.
    Subscribe to `message.groups`, install/reinstall, invite bot to the channel.
    Public channels use `channels:history` / `message.channels` instead, but do not
    enable shared Finnhub posting without written approval.
@@ -116,7 +117,10 @@ Delete stored data if your data subscription ends, as Finnhub's terms require.
    FINNHUB_API_KEY=<your-key>
    FINNHUB_US_SYMBOL_CURRENCIES={"AAPL":"USD","SPY":"USD"}
    FINNHUB_MINUTE_LIMIT=60
-   STONKSBOT_STATE_DIR=/var/lib/stonksbot-finnhub
+   STONKSBOT_HISTORY_PROVIDER=alpha-vantage
+   ALPHAVANTAGE_API_KEY=<your-history-key>
+   ALPHAVANTAGE_DAILY_LIMIT=25
+   STONKSBOT_STATE_DIR=/var/lib/stonksbot
    ```
 
    This is an environment-file example, not shell commands. Quote JSON in shell
@@ -127,7 +131,12 @@ Delete stored data if your data subscription ends, as Finnhub's terms require.
 4. `npm start` under that environment, then `$AAPL` in the allowed channel.
    Expect a threaded card with Finnhub source/timestamp. Quotes cached 15 seconds;
    market closures can leave older timestamps, flagged stale after 15 minutes.
-   No free historical candles are requested, no chart or invented history shown.
+   Finnhub supplies no free historical candles. With the history configuration
+   above, Alpha Vantage supplies up to 100 raw daily closes for a separate chart.
+   Keep `files:write` scope for this chart. Card and upload title identify Alpha
+   Vantage daily history, not live/intraday. Quote and history are never blended;
+   no cross-feed return is calculated. History failure leaves an explicit
+   unavailable/no-chart notice while preserving the valid Finnhub quote.
    Stop via service manager or Ctrl-C. Check channel ID, app invitation, scopes
    and events if no response. Never include real tokens in screenshots or logs.
 
@@ -138,7 +147,10 @@ can still hit Finnhub's limit. Cache does not hide stale quote timestamps. No ra
 provider errors or token-bearing URLs logged; header authentication is used.
 Potentially stale `provider.lock` is reported after 5 minutes, never auto-deleted.
 Stop all instances and inspect before removing a crashed lock; never delete state
-to bypass limits. Keep different providers in different state directories.
+to bypass limits. The root automatically uses separate `finnhub/` and `alpha-vantage/` child
+directories, and each state file validates its provider identity. Existing
+pre-release state files without that identity are rejected; do not delete state
+to reset quota. Stop the bot and migrate deliberately, retaining budget history.
 
 ## Optional Alpha Vantage daily closes
 
@@ -163,3 +175,10 @@ Official references checked:
 - https://www.alphavantage.co/documentation/ (daily compact availability)
 - https://www.alphavantage.co/support/ (free quota)
 - https://docs.slack.dev/apis/events-api/using-socket-mode/
+
+Mixed-source basis: this use is personal, not business. Alpha Vantage terms grant
+personal, non-commercial use and treat acting for a corporation as commercial:
+https://www.alphavantage.co/terms%5Fof%5Fservice/ . Combining two clearly attributed
+series for the same personal viewer does not waive either provider's conditions.
+No shared Slack channel or Peliteoria use. US symbols only; Nasdaq Helsinki
+coverage is not verified and US ADRs must not be treated as Helsinki listings.

@@ -37,10 +37,10 @@ export class AlphaVantageProvider {
     }
     try {
       const path = join(this.stateDir, 'state.json');
-      let state = { calls: [], cache: {}, blockedUntil: 0 };
+      let state = { provider: 'alpha-vantage', calls: [], cache: {}, blockedUntil: 0 };
       try { state = JSON.parse(await readFile(path, 'utf8')); }
       catch (error) { if (error.code !== 'ENOENT') throw fail(); }
-      if (!Array.isArray(state.calls) || state.calls.some(t => !Number.isFinite(t)) ||
+      if (state.provider !== 'alpha-vantage' || !Array.isArray(state.calls) || state.calls.some(t => !Number.isFinite(t)) ||
           !state.cache || typeof state.cache !== 'object' || !Number.isFinite(state.blockedUntil)) throw fail();
       const now = this.now();
       if (state.calls.some(t => t > now)) throw fail(); // Clock rollback must not reset quota.
@@ -48,7 +48,7 @@ export class AlphaVantageProvider {
       const cached = Object.hasOwn(state.cache, symbol) ? state.cache[symbol] : null;
       if (cached && now >= cached.fetchedAt && now - cached.fetchedAt < this.cacheMs) {
         const quote = validateQuote(cached.quote);
-        if (quote.symbol !== symbol || quote.currency !== this.currencies[symbol] || quote.fixture !== false) throw fail();
+        if (quote.symbol !== symbol || quote.currency !== this.currencies[symbol] || quote.fixture !== false || quote.priceKind !== 'daily-close') throw fail();
         return quote;
       }
       if (now < state.blockedUntil || state.calls.length >= this.dailyLimit) throw Error('Alpha Vantage local rolling-24h quota exhausted. No request sent.');

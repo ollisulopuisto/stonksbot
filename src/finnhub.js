@@ -37,10 +37,10 @@ export class FinnhubProvider {
     }
     try {
       const path = join(this.stateDir, 'state.json');
-      let state = { calls: [], cache: {}, blockedUntil: 0 };
+      let state = { provider: 'finnhub', calls: [], cache: {}, blockedUntil: 0 };
       try { state = JSON.parse(await readFile(path, 'utf8')); }
       catch (error) { if (error.code !== 'ENOENT') throw fail(); }
-      if (!Array.isArray(state.calls) || state.calls.some(t => !Number.isFinite(t)) ||
+      if (state.provider !== 'finnhub' || !Array.isArray(state.calls) || state.calls.some(t => !Number.isFinite(t)) ||
           !state.cache || Array.isArray(state.cache) || typeof state.cache !== 'object' || !Number.isFinite(state.blockedUntil)) throw fail();
       const now = this.now();
       if (state.calls.some(t => t > now)) throw fail(); // Clock rollback must not reset quota.

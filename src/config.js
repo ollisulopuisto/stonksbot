@@ -1,3 +1,5 @@
+import { join } from 'node:path';
+import { QuoteWithDailyHistory } from './history.js';
 import { FixtureProvider } from './provider.js';
 import { FinnhubProvider } from './finnhub.js';
 import { AlphaVantageProvider } from './alpha-vantage.js';
@@ -11,13 +13,19 @@ export function configuredProvider(env = process.env) {
     let currencies;
     try { currencies = JSON.parse(env.FINNHUB_US_SYMBOL_CURRENCIES ?? ''); }
     catch { throw Error('Set FINNHUB_US_SYMBOL_CURRENCIES to explicitly verified US symbols mapped to USD.'); }
-    return new FinnhubProvider({ apiKey: env.FINNHUB_API_KEY, currencies, stateDir: env.STONKSBOT_STATE_DIR,
+    if (!env.STONKSBOT_STATE_DIR) throw Error('Set a private persistent STONKSBOT_STATE_DIR.');
+    const quote = new FinnhubProvider({ apiKey: env.FINNHUB_API_KEY, currencies, stateDir: join(env.STONKSBOT_STATE_DIR, 'finnhub'),
       minuteLimit: Number(env.FINNHUB_MINUTE_LIMIT ?? 60) });
+    if (!env.STONKSBOT_HISTORY_PROVIDER) return quote;
+    if (env.STONKSBOT_HISTORY_PROVIDER !== 'alpha-vantage') throw Error('Unknown history provider. Choose alpha-vantage or leave unset.');
+    return new QuoteWithDailyHistory(quote, new AlphaVantageProvider({ apiKey: env.ALPHAVANTAGE_API_KEY, currencies,
+      stateDir: join(env.STONKSBOT_STATE_DIR, 'alpha-vantage'), dailyLimit: Number(env.ALPHAVANTAGE_DAILY_LIMIT ?? 25) }));
   }
   if (env.STONKSBOT_PROVIDER !== 'alpha-vantage') throw Error('Unknown provider. Choose fixture, finnhub or alpha-vantage.');
   let currencies;
   try { currencies = JSON.parse(env.ALPHAVANTAGE_SYMBOL_CURRENCIES ?? ''); }
   catch { throw Error('Set ALPHAVANTAGE_SYMBOL_CURRENCIES to a symbol-to-currency JSON object.'); }
-  return new AlphaVantageProvider({ apiKey: env.ALPHAVANTAGE_API_KEY, currencies, stateDir: env.STONKSBOT_STATE_DIR,
+  if (!env.STONKSBOT_STATE_DIR) throw Error('Set a private persistent STONKSBOT_STATE_DIR.');
+  return new AlphaVantageProvider({ apiKey: env.ALPHAVANTAGE_API_KEY, currencies, stateDir: join(env.STONKSBOT_STATE_DIR, 'alpha-vantage'),
     dailyLimit: Number(env.ALPHAVANTAGE_DAILY_LIMIT ?? 25) });
 }
