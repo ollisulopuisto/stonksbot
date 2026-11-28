@@ -576,16 +576,18 @@ short labels. Exact ticker identities win before name search. Explicit .HE/.US
 routes bypass fuzzy matching; US-only providers accept the explicit .US route.
 
 Matching: lowercase/diacritic/punctuation normalization, strip company suffixes
-for comparison only; display full source name. Exact normalized name scores1,
-whole-word prefix0.8, otherwise normalized Levenshtein similarity. Minimum0.8
-(query>=4characters),0.95for3characters, and top-two gap>=0.12. Inputs<3or>80chars
-never auto-match. Close/low scores yield short Did you mean suggestions (up to3)
-or No confident match, no quote/reaction. Short typo appl is deliberately a
-suggestion, not guessed Apple. Generic bank is ambiguous. Same ticker across
-markets follows the existing table collision policy. Snapshot can age, cannot
-promise all new instruments, ETF naming families often need explicit tickers.
-Current cashtag parser supports single-token names up to10chars; mention form
-accepts multiword names. No language-model/web/API fuzzy search.
+for comparison only; display full source name. Runtime requires an EXACT whole
+normalized core name, not a prefix/ordinary-word similarity. Exact ticker identity
+wins first for cashtags. Unknown cashtags pass unchanged to the original provider
+path (BRK-B normalizes to BRK.B), preserving OTC/new-listing support; a name-index
+miss is not proof a ticker doesn't exist. Multiple exact core-name candidates
+produce a short Did you mean list, no quote/reaction. App mentions require a
+strong exact core-name match or a cashtag; ordinary help/test/thanks/status and
+weak/prefix google/hello/ping stay silent, not chatter. Mood questions retain
+their question flag after $apple -> AAPL resolution. Name matching consumes no
+quota, normal provider requests still do. Source snapshot/new listings remain
+limits. Current cashtag parser is single-token10chars, mention accepts a single
+multiword company name; multiword multi-name queries are out of scope.
 
 Slack setup: add bot OAuth scope app_mentions:read and subscribe bot event
 app_mention, reinstall app after scopes change. Existing message.channels/groups
@@ -603,3 +605,7 @@ npm test
 Review diff/date/count, rebuild Helsinki collision snapshot if relevant, submit
 PR. US data bundled as factual instrument identifiers/names, not price data.
 No real API keys, live provider quote, Slack app event/install or deploy tested.
+
+The Nasdaq snapshot's redistribution terms have not been verified. It is a factual
+identifier/name list, not price data, but that alone does not settle licensing;
+review those terms before distributing the bundled snapshot more widely.

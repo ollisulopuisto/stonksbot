@@ -13,21 +13,22 @@ function similarity(a,b){
  for(let i=1;i<=a.length;i++){let prev=row[0];row[0]=i;for(let j=1;j<=b.length;j++){const old=row[j];row[j]=Math.min(row[j]+1,row[j-1]+1,prev+(a[i-1]!==b[j-1]));prev=old;}}
  return 1-row[b.length]/Math.max(a.length,b.length);
 }
-export function resolveName(index,input){
+export function resolveName(index,input,{strict=false,namesOnly=false}={}){
  const ticker=input.toUpperCase();
  // Ticker identity wins before name matching; preserve existing bare routing.
  const exact=index.filter(x=>x.symbol===ticker);
- if(exact.length)return {symbol:exact.find(x=>x.route.endsWith('.HE'))?.canonical??exact[0].canonical,route:ticker,name:null};
+ if(!namesOnly&&exact.length)return {symbol:exact.find(x=>x.route.endsWith('.HE'))?.canonical??exact[0].canonical,route:ticker,name:null};
  const query=normalizeName(input);if(query.length<3||query.length>80)return {notice:'No confident instrument match. Use a ticker.'};
  const ranked=index.map(item=>{
   const n=item.normalized;
-  const score=n===query?1:n.startsWith(query+' ')?0.8:similarity(query,n);
+  const score=n===query?1:strict?0:similarity(query,n);
   return {item,score};
  }).filter(x=>x.score>=0.45).sort((a,b)=>b.score-a.score||a.item.route.localeCompare(b.item.route));
  // Same canonical listing repeated in aliases is one candidate, not a tie.
  const candidates=ranked.filter((x,i,all)=>all.findIndex(y=>y.item.route===x.item.route)===i);
  const best=candidates[0],second=candidates[1];
  const threshold=query.length>=4?0.8:0.95;
- if(best&&best.score>=threshold&&(!second||best.score-second.score>=0.12))return {symbol:best.item.canonical,route:best.item.route,name:best.item.name};
- return {notice:candidates.length?'Did you mean '+candidates.slice(0,3).map(x=>`${x.item.name} ($${x.item.canonical})`).join(' or ')+'? Use a ticker.':'No confident instrument match. Use a ticker.'};
+ if(best&&best.score>=threshold&&(!second||best.score-second.score>=0.12))return {symbol:best.item.canonical,route:best.item.route,name:best.item.name,strong:best.score===1};
+ if(strict&&!candidates.length)return {notice:'No confident instrument match. Use a ticker.',strong:false};
+ return {strong:!!best&&best.score===1,notice:candidates.length?'Did you mean '+candidates.slice(0,3).map(x=>`${x.item.name} ($${x.item.canonical})`).join(' or ')+'? Use a ticker.':'No confident instrument match. Use a ticker.'};
 }

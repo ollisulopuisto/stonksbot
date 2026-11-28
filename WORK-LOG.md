@@ -314,3 +314,10 @@ app_mention event enables mention parsing, channel gate retained. No bare prose
 trigger, no bot/edit loop, one instrument+no suggestions required for reaction.
 No account/key/API quotes, Slack scope mutation/install or deployment.130tests,
 audit0/demo/diff pass, exact-head CI/reviewer required; NO MERGE until new user yes.
+
+Reviewer findings fixed with failing-first regression tests. Unknown/OTC/new
+cashtags preserve provider lookup; BRK-B -> BRK.B. Runtime name matching now
+requires whole normalized core equality, no prefix/fuzzy auto-quote. Mention
+ordinary words silent, exact-name ambiguity asks. Cashtag exact-name $apple still
+works; question flag follows mapped route. Snapshot redistribution terms explicitly
+unverified in README. Multiword multi-name requests out of scope.132tests pass.

@@ -57,21 +57,27 @@ export function createHandler({ provider, send, now = Date.now, onError = () => 
   return async event => {
     if (!event || event.bot_id || event.subtype || !/^[A-Z0-9]+$/.test(event.channel ?? '') || !/^\d+\.\d+$/.test(event.ts ?? '')) return;
     let symbols = extractTickers(event.text);
+    const questions = new Set(moodQuestionTickers(event.text));
     const matchedNames=new Map();
     const notices=[];
     if(nameIndex){
+      const cashtag=!!symbols.length;
       const queries=symbols.length?symbols:(event.type==='app_mention'&&/<@[A-Z0-9]+>/.test(event.text??'')?[plainMessage(event.text).trim()]:[]);
       symbols=[];
       for(const query of queries){
         if(/\.(HE|US)$/.test(query)){symbols.push(query);continue;}
-        const resolved=resolveName(nameIndex,query);
-        if(resolved.notice){notices.push(resolved.notice);continue;}
-        const route=resolved.route;
+        const resolved=resolveName(nameIndex,query,{strict:true,namesOnly:!cashtag});
+        if(resolved.notice){
+          if(resolved.strong)notices.push(resolved.notice);
+          else if(cashtag)symbols.push(query.toUpperCase().replace(/-([AB])$/,'.$1'));
+          continue;
+        }
+        const route=resolved.route.replace(/-([AB])$/,'.$1');
+        if(questions.has(query))questions.add(route);
         symbols.push(route);if(resolved.name)matchedNames.set(route,resolved.name);
       }
       symbols=[...new Set(symbols)].slice(0,3);
     }
-    const questions = new Set(moodQuestionTickers(event.text));
     if (!symbols.length&&!notices.length) return;
     const key = `${event.channel}:${event.ts}`;
     const time = now();

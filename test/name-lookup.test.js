@@ -19,7 +19,7 @@ test('cashtag name and verified app mention resolve quote, ordinary prose does n
 test('ambiguous/low-confidence name asks instead of querying, duplicate mention events dedup',async()=>{
  const calls=[],sent=[];const handler=createHandler({nameIndex:index,provider:{lookup:async s=>{calls.push(s);return quote(s);}},send:async p=>sent.push(p)});
  const event={channel:'C1',ts:'1.1',type:'app_mention',text:'<@B123> bank'};await handler(event);await handler(event);
- assert.equal(calls.length,0);assert.equal(sent.length,1);assert.match(sent[0].card.text,/Did you mean|No confident/);
+ assert.equal(calls.length,0);assert.equal(sent.length,0);
 });
 test('near ties and generic names never guess, explicit ticker routes bypass fuzzy',()=>{
  for(const q of ['bank','trust','energy','appl','apple hospitality'])assert.ok(resolveName(index,q).notice||resolveName(index,q).name);
@@ -29,4 +29,15 @@ test('near ties and generic names never guess, explicit ticker routes bypass fuz
 test('multiple instruments or suggestion plus instrument never reacts ambiguously',async()=>{
  const reactions=[],posts=[];const handler=createHandler({nameIndex:index,provider:{lookup:async s=>quote(s.replace('.US',''))},send:async p=>posts.push(p),react:async p=>reactions.push(p),now:()=>Date.parse('2026-11-27T18:00:00Z')});
  await handler({channel:'C1',ts:'2.1',text:'$apple $bank'});assert.equal(reactions.length,0);assert.equal(posts.length,2);
+});
+test('unindexed cashtags pass through, BRK-B normalizes, strict names still resolve',async()=>{
+ const calls=[];const handler=createHandler({nameIndex:index,provider:{lookup:async s=>{calls.push(s);return null;}},send:async()=>{}});
+ for(const [i,s]of ['BRK-B','NSRGY','NEWLISTING','google','hello','ping','apple'].entries())await handler({channel:'C1',ts:`9.${i}`,text:'$'+s});
+ assert.deepEqual(calls,['BRK.B','NSRGY','NEWLISTING','GOOGLE','HELLO','PING','AAPL.US']);
+});
+test('ordinary app mentions stay silent, strict names work, resolved mood question retains flag',async()=>{
+ const sent=[],calls=[];const handler=createHandler({nameIndex:index,provider:{lookup:async s=>{calls.push(s);return {...quote('AAPL'),price:101,name:'Apple'};}},send:async p=>sent.push(p),now:()=>Date.parse('2026-11-27T18:00:00Z')});
+ for(const [i,s]of ['help','test','thanks','status','google','hello','ping'].entries())await handler({channel:'C1',ts:`8.${i}`,type:'app_mention',text:'<@B123> '+s});
+ assert.equal(sent.length,0);assert.equal(calls.length,0);
+ await handler({channel:'C1',ts:'8.8',text:'is $apple over?'});assert.match(sent[0].card.text,/no trigger/);
 });
