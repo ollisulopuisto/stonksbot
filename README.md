@@ -1,7 +1,9 @@
 # Stonksbot
 
-Slack stock-ticker cards. This first version uses **synthetic fixtures only**.
-It does not fetch current market prices. No data-provider account is needed.
+Slack stock-ticker cards. Offline DEMO fixtures remain the default. Explicit
+Finnhub mode fetches on-demand **real-time US quotes**, with a 15-second cache.
+Optional Alpha Vantage mode remains available for daily closes. No
+provider account is needed for the offline demo.
 
 ## Try without Slack
 
@@ -31,13 +33,14 @@ Invite it only to intended channels.
 
 Set SLACK_BOT_TOKEN, SLACK_APP_TOKEN and an explicit comma-separated
 SLACK_CHANNEL_IDS allowlist in your process environment. Do not commit tokens.
-`npm start` refuses to connect unless STONKSBOT_ALLOW_FIXTURE_POSTING=yes is
-also set. All posted cards remain labelled DEMO. No live provider is selected.
+Fixture-mode `npm start` requires STONKSBOT_ALLOW_FIXTURE_POSTING=yes. Those
+cards remain labelled DEMO. Select a live provider explicitly below; no fallback.
 
 The bot reacts to `$AAPL`, not bare AAPL, to avoid ordinary-word false positives.
 It ignores bots, message edits, URLs and code, handles at most three distinct
-symbols per message, and replies in a thread with a card followed by a local PNG
-upload. Active work is capped at four messages. Overload is dropped, not queued.
+symbols per message, and replies in a thread with a card. Fixtures and Alpha Vantage add a local history PNG; Finnhub free
+quotes have no history of their own; optional Alpha Vantage daily history adds
+a separately labeled chart, never fabricated points. Active work is capped at four messages. Overload is dropped, not queued.
 Event and symbol deduplication lasts ten minutes, in memory, so it resets on
 restart. Multi-instance deduplication is not implemented. If a Slack card posts
 but its PNG upload fails, retry can duplicate the card. No delivery guarantee.
@@ -47,8 +50,8 @@ but its PNG upload fails, retry can duplicate the card. No delivery guarantee.
 Implement `lookup(symbol)` returning null or `{symbol, name, price, currency,
 asOf, source, fixture, history: [{date, close}]}`. Prices must be finite and
 nonnegative, currency a three-letter code, history sorted with unique dates.
-A non-fixture quote older than 15 minutes is labelled stale; timestamps in the
-future are labelled invalid. This is a conservative display rule, not an
+A non-fixture current quote older than 15 minutes is labelled stale; future
+timestamps are labelled invalid. Alpha daily closes use a separate date-only label. This is a conservative display rule, not an
 exchange-hours freshness model. Invalid data produces no card.
 
 Code licenses do not grant market-data rights. Yahoo's unofficial APIs,
@@ -74,3 +77,108 @@ bytes, retry/dedup and bot suppression. The local PNG was visually inspected.
 No live Slack layout or installation, real market provider, deployment or
 purchase was tested. The chart is not a trading chart. No portfolio, alerts,
 exchange resolution or live price promise in v1.
+
+
+## Install for personal-only Slack use (Finnhub US quotes)
+
+No deploy or account connection is performed by this PR. Use Node 22+ under an
+unprivileged service account. Socket Mode needs no public HTTP endpoint.
+
+**Data rights first:** Finnhub's personal plans prohibit sharing data or derived
+results with anyone/third parties without written approval. They also prohibit
+business use, even internally, business-name registration and expensing the plan
+without approval. A private team channel is not automatically permitted. Confirm
+this is personal-only use and the channel is visible only to you before setting
+FINNHUB_PERSONAL_USE_CONFIRMED=yes. This flag records your decision, not a license.
+This bot is personal-use-only: a private channel visible only to you, no sharing,
+and no Peliteoria Oy or other business use. If others will see the cards, get
+Finnhub's written approval or another license.
+Delete stored data if your data subscription ends, as Finnhub's terms require.
+
+1. Create a Slack app, enable Socket Mode, generate an app token with
+   `connections:write`. Bot scopes: `chat:write` and `groups:history` for a private
+   channel, plus `files:write` for the Alpha Vantage chart uploads configured below.
+   Subscribe to `message.groups`, install/reinstall, invite bot to the channel.
+   Public channels use `channels:history` / `message.channels` instead, but do not
+   enable shared Finnhub posting without written approval.
+2. Get your own Finnhub free API key. Official pricing lists 60 API calls/minute;
+   docs add a 30 calls/second cap. `/quote` supports real-time US stocks. This bot
+   requests only on cashtags, never continuous polling. No paid signup included.
+3. Clone, `npm ci`, `npm test`, `npm run demo`. Create a private persistent state
+   directory writable only by the service account. Put this environment in the
+   service manager's private environment file (mode 0600, outside the repo):
+
+   ```text
+   STONKSBOT_PROVIDER=finnhub
+   FINNHUB_PERSONAL_USE_CONFIRMED=yes
+   SLACK_BOT_TOKEN=<your-bot-token>
+   SLACK_APP_TOKEN=<your-socket-mode-app-token>
+   SLACK_CHANNEL_IDS=<your-personal-private-channel-id>
+   FINNHUB_API_KEY=<your-key>
+   FINNHUB_US_SYMBOL_CURRENCIES={"AAPL":"USD","SPY":"USD"}
+   FINNHUB_MINUTE_LIMIT=60
+   STONKSBOT_HISTORY_PROVIDER=alpha-vantage
+   ALPHAVANTAGE_API_KEY=<your-history-key>
+   ALPHAVANTAGE_DAILY_LIMIT=25
+   STONKSBOT_STATE_DIR=/var/lib/stonksbot
+   ```
+
+   This is an environment-file example, not shell commands. Quote JSON in shell
+   exports. Node does not load `.env` automatically. Verify every configured
+   symbol is a US listing denominated in USD. The quote response has no currency
+   or symbol metadata; the explicit map is your allowlist, not automatic exchange
+   verification. Other currencies rejected. No Finnish/international support.
+4. `npm start` under that environment, then `$AAPL` in the allowed channel.
+   Expect a threaded card with Finnhub source/timestamp. Quotes cached 15 seconds;
+   market closures can leave older timestamps, flagged stale after 15 minutes.
+   Finnhub supplies no free historical candles. With the history configuration
+   above, Alpha Vantage supplies up to 100 raw daily closes for a separate chart.
+   Keep `files:write` scope for this chart. Card and upload title identify Alpha
+   Vantage daily history, not live/intraday. Quote and history are never blended;
+   no cross-feed return is calculated. History failure leaves an explicit
+   unavailable/no-chart notice while preserving the valid Finnhub quote.
+   Stop via service manager or Ctrl-C. Check channel ID, app invitation, scopes
+   and events if no response. Never include real tokens in screenshots or logs.
+
+One process and one persistent state directory per key. Requests count before
+network including failures; rolling-minute and 30/second limits survive restart.
+HTTP 429 pauses new calls one minute, no automatic retry. Shared use by other apps
+can still hit Finnhub's limit. Cache does not hide stale quote timestamps. No raw
+provider errors or token-bearing URLs logged; header authentication is used.
+Potentially stale `provider.lock` is reported after 5 minutes, never auto-deleted.
+Stop all instances and inspect before removing a crashed lock; never delete state
+to bypass limits. The root automatically uses separate `finnhub/` and `alpha-vantage/` child
+directories, and each state file validates its provider identity. Existing
+pre-release state files without that identity are rejected; do not delete state
+to reset quota. Stop the bot and migrate deliberately, retaining budget history.
+
+## Optional Alpha Vantage daily closes
+
+Retained as a separate explicit mode. Its own personal-use terms apply. Set
+STONKSBOT_PROVIDER=alpha-vantage, ALPHAVANTAGE_API_KEY,
+ALPHAVANTAGE_SYMBOL_CURRENCIES (JSON symbol/currency map),
+ALPHAVANTAGE_DAILY_LIMIT=25 and a separate STONKSBOT_STATE_DIR. It supplies daily
+unadjusted closes and chart history, not live prices. One compact
+TIME_SERIES_DAILY request supplies latest 100 closes. Six-hour cache, rolling
+24-hour request budget including failures, limit notices pause 24 hours.
+Daily midnight UTC is a trading-date marker, not exchange-close time. History
+older than 4 days is flagged old. Requires Slack files:write for chart upload.
+
+Provider tests use invented responses, fake keys and injected fetch. No actual
+provider request/key, Slack install/layout or VPS deployment verified. Existing
+upload retry/dedup caveats apply. Mood reactions remain out of scope.
+
+Official references checked:
+- https://finnhub.io/docs/api/quote (US real-time quotes, auth, rate limits)
+- https://finnhub.io/pricing (free 60/minute, personal use)
+- https://finnhub.io/terms-of-service (sharing and business limits)
+- https://www.alphavantage.co/documentation/ (daily compact availability)
+- https://www.alphavantage.co/support/ (free quota)
+- https://docs.slack.dev/apis/events-api/using-socket-mode/
+
+Mixed-source basis: this use is personal, not business. Alpha Vantage terms grant
+personal, non-commercial use and treat acting for a corporation as commercial:
+https://www.alphavantage.co/terms%5Fof%5Fservice/ . Combining two clearly attributed
+series for the same personal viewer does not waive either provider's conditions.
+No shared Slack channel or Peliteoria use. US symbols only; Nasdaq Helsinki
+coverage is not verified and US ADRs must not be treated as Helsinki listings.
