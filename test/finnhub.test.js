@@ -66,9 +66,9 @@ test('previous close is optional same-feed data, invalid values never become moo
   assert.match(text,pc===100?/We're back/:/updated just now/);
  }
 });
-test('profile2 names count quota, persist across restart and fail to ticker safely',async t=>{
+test('symbol-search names count quota, persist across restart and fail to ticker safely',async t=>{
  const dir=await mkdtemp(join(tmpdir(),'names-test-'));t.after(()=>rm(dir,{recursive:true,force:true}));
- const urls=[];const options={apiKey:'fake',stateDir:dir,now:()=>now,resolveNames:true,fetchImpl:async url=>{urls.push(url.pathname);return {ok:true,json:async()=>url.pathname.endsWith('profile2')?{ticker:'AAPL',name:'Apple Inc'}:{c:106,pc:100,t:now/1000}};}};
+ const urls=[];const options={apiKey:'fake',stateDir:dir,now:()=>now,resolveNames:true,fetchImpl:async url=>{urls.push(url.pathname);return {ok:true,json:async()=>url.pathname.endsWith('/search')?{result:[{symbol:'AAPL',description:'Apple Inc'}]}:{c:106,pc:100,t:now/1000}};}};
  const q=await new FinnhubProvider(options).lookup('AAPL');assert.equal(q.name,'Apple Inc');assert.equal(urls.length,2);
  const state=JSON.parse(await readFile(join(dir,'state.json'),'utf8'));assert.equal(state.calls.length,2);
  assert.equal((await new FinnhubProvider({...options,now:()=>now+16000}).lookup('AAPL')).name,'Apple Inc');assert.equal(urls.length,3);

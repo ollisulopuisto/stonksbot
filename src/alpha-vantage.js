@@ -1,3 +1,4 @@
+import { cleanName } from './instrument-name.js';
 import { mkdir, open, readFile, rename, stat, unlink, writeFile } from 'node:fs/promises';
 import { resolve, join } from 'node:path';
 import { validateQuote } from './provider.js';
@@ -6,7 +7,7 @@ import { tickerCurrency, validCurrencies } from './tickers.js';
 const DAY = 86400000;
 const fail = () => new Error('Alpha Vantage unavailable or invalid data; no raw response logged.');
 export class AlphaVantageProvider {
-  constructor({ apiKey, currencies, stateDir, dailyLimit = 25, cacheMs = 6 * 3600000, fetchImpl = fetch, now = Date.now }) {
+  constructor({ apiKey, currencies, stateDir, dailyLimit = 25, cacheMs = 6 * 3600000, fetchImpl = fetch, now = Date.now, resolveNames = false }) {
     if (typeof apiKey !== 'string' || !apiKey || typeof stateDir !== 'string' || !stateDir ||
         !validCurrencies(currencies, false) ||
         !Number.isInteger(dailyLimit) || dailyLimit < 1 || dailyLimit > 25 ||
@@ -14,6 +15,7 @@ export class AlphaVantageProvider {
       throw Error('Set Alpha Vantage key, private persistent state directory and optional symbol currencies (default US/USD); limit 1..25.');
     }
     Object.assign(this, { apiKey, currencies: currencies === undefined ? undefined : { ...currencies }, stateDir: resolve(stateDir), dailyLimit, cacheMs, fetchImpl, now });
+    this.resolveNames=resolveNames;
     this.queue = Promise.resolve();
   }
   lookup(symbol) {
@@ -85,7 +87,27 @@ export class AlphaVantageProvider {
       }).sort((a, b) => a.date.localeCompare(b.date));
       const last = history.at(-1);
       if (!last || Date.parse(last.date) > now) throw fail();
-      const quote = validateQuote({ symbol, name: symbol, price: last.close, currency: tickerCurrency(this.currencies, symbol),
+      let name=symbol;
+      if(this.resolveNames){
+        state.names ??= {};
+        if(!state.names||typeof state.names!=='object'||Array.isArray(state.names))throw fail();
+        const cachedName=Object.hasOwn(state.names,symbol)&&state.names[symbol];
+        if(cachedName&&Number.isFinite(cachedName.at)&&cachedName.at<=now&&now-cachedName.at<DAY&&typeof cachedName.name==='string')name=cachedName.name;
+        else if(state.calls.length<this.dailyLimit&&now>=state.blockedUntil){
+          state.calls.push(now);await save();
+          try{
+            const searchUrl=new URL('https://www.alphavantage.co/query');searchUrl.search=new URLSearchParams({function:'SYMBOL_SEARCH',keywords:symbol,apikey:this.apiKey});
+            const response=await this.fetchImpl(searchUrl,{signal:AbortSignal.timeout(15000),redirect:'error'});
+            if(response.status===429)state.blockedUntil=now+DAY;
+            if(response.ok){const found=await response.json(); // A name-only notice is cached locally, not a quote entitlement decision.
+              const exact=Array.isArray(found?.bestMatches)?found.bestMatches.filter(x=>x['1. symbol']===symbol&&x['8. currency']===tickerCurrency(this.currencies,symbol)):[];
+              if(exact.length===1)name=cleanName(exact[0]['2. name'])||symbol;
+            }
+          }catch{} // Quote still valid; no raw token-bearing errors logged.
+          state.names[symbol]={at:now,name};await save();
+        }
+      }
+      const quote = validateQuote({ symbol, name, price: last.close, currency: tickerCurrency(this.currencies, symbol),
         asOf: last.date + 'T00:00:00Z', source: 'Alpha Vantage daily unadjusted close', fixture: false, priceKind: 'daily-close', history });
       state.cache[symbol] = { fetchedAt: now, quote };
       await save();

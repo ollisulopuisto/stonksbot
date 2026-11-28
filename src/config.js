@@ -29,7 +29,7 @@ function baseProvider(env) {
   catch { throw Error('Set ALPHAVANTAGE_SYMBOL_CURRENCIES to a symbol-to-currency JSON object.'); }
   if (!env.STONKSBOT_STATE_DIR) throw Error('Set a private persistent STONKSBOT_STATE_DIR.');
   return new AlphaVantageProvider({ apiKey: env.ALPHAVANTAGE_API_KEY, currencies, stateDir: join(env.STONKSBOT_STATE_DIR, 'alpha-vantage'),
-    dailyLimit: Number(env.ALPHAVANTAGE_DAILY_LIMIT ?? 25) });
+    resolveNames: env.ALPHAVANTAGE_RESOLVE_NAMES !== 'no', dailyLimit: Number(env.ALPHAVANTAGE_DAILY_LIMIT ?? 25) });
 }
 
 export function configuredProvider(env = process.env) {
