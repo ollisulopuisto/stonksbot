@@ -57,7 +57,7 @@ test('persistent rolling20/day limit includes metadata, cache refresh, failures 
  for(const symbol of symbols.slice(0,9))await s.provider.lookup(symbol+'.HE'); //2metadata +9*(quote+history)=20
  assert.equal(s.calls.length,20);
  await assert.rejects(new EodhdProvider(s.args).lookup('ETF9.HE'),/quota/);assert.equal(s.calls.length,20);
- s.advance(72*3600000);await new EodhdProvider(s.args).lookup('ETF9.HE');assert.equal(s.calls.length,24);
+ s.advance(72*3600000);await new EodhdProvider(s.args).lookup('ETF9.HE');assert.equal(s.calls.length,22); //7day catalog cache survives restart
  const failed=await setup(t,{args:{dailyLimit:2,fetchImpl:async()=>{throw Error('fail');}}});
  for(let i=0;i<2;i++)await assert.rejects(failed.provider.lookup('NOKIA.HE'));
  await assert.rejects(new EodhdProvider(failed.args).lookup('NOKIA.HE'),/quota/);

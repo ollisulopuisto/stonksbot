@@ -3,7 +3,7 @@ import { rangeStart } from './chart-ranges.js';
 import { mkdir, open, readFile, rename, stat, unlink, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { validateQuote } from './provider.js';
-const DAY=86400000, MINUTE=60000;
+const DAY=86400000, MINUTE=60000, CATALOG_TTL=7*DAY;
 const fail=()=>Error('EODHD unavailable, entitlement missing or invalid data; no raw response logged.');
 const supported=eodhdSupported;
 const positive=n=>Number.isFinite(n)&&n>0;
@@ -31,7 +31,16 @@ export class EodhdProvider {
   }
   try{return await this.load(symbol,options);}finally{await lock.close();await unlink(lockPath);}
  }
- async load(symbol,{range='30d'}={}) {
+ async hasCachedSymbol(code){
+  const seed=JSON.parse(await readFile(new URL('../data/xetra-seed.json',import.meta.url),'utf8'));
+  if(seed.verified===false&&seed.entries.some(row=>row.symbol===code+'.XETRA'&&row.currency==='EUR'))return true;
+  try{const state=JSON.parse(await readFile(join(this.stateDir,'state.json'),'utf8'));return ['XETRA','HE'].some(suffix=>fresh(state.metadata?.[suffix],this.now(),CATALOG_TTL)&&Object.hasOwn(state.metadata[suffix].items,code+'.'+suffix));}catch{return false;}
+ }
+ resolveBare(code){
+  if(typeof code!=='string'||!/^[A-Z][A-Z0-9-]{0,12}$/.test(code))return Promise.resolve([]);
+  const result=this.queue.then(async()=>{const matches=[];for(const suffix of ['XETRA','HE']){if(!supported(code+'.'+suffix))continue;const items=await this.locked(code+'.'+suffix,{catalogOnly:true});if(Object.hasOwn(items,code+'.'+suffix))matches.push(code+'.'+suffix);}return matches;});this.queue=result.catch(()=>{});return result;
+ }
+ async load(symbol,{range='30d',catalogOnly=false}={}) {
   const path=join(this.stateDir,'state.json');let state={provider:'eodhd',calls:[],blockedUntil:0,lastSeen:0,metadata:null,quotes:{},histories:{}};
   try{state=JSON.parse(await readFile(path,'utf8'));}catch(error){if(error.code!=='ENOENT')throw fail();}
   const now=this.now();
@@ -55,17 +64,22 @@ export class EodhdProvider {
   const metadata=state.metadata?.[suffix]??(suffix==='HE'&&state.metadata?.items?state.metadata:null);
   const existingQuote=Object.hasOwn(state.quotes,symbol)&&state.quotes[symbol];
   // Outside regular hours, retain existing data without spending the tiny budget.
-  const retainClosed=!inSession&&existingQuote&&metadata;
-  // Fetch both catalogs at most once/day. Exchange suffix alone proves nothing.
-  if(!retainClosed&&!fresh(metadata,now,DAY)){
-   const exchanges=await request('exchanges-list/');
+  const retainClosed=!catalogOnly&&!inSession&&existingQuote&&metadata;
+  // Seven-day persisted catalogs; failed refresh backs off one day. No timer.
+  if(!retainClosed&&!fresh(metadata,now,CATALOG_TTL)){
+   state.catalogAttempts??={};
+   if(fresh(state.catalogAttempts[suffix],now,DAY))throw Error('EODHD catalog refresh backoff or quota exhausted; no request sent.');
+   state.catalogAttempts[suffix]={at:now};await save();
+   const exchanges=fresh(state.exchanges,now,CATALOG_TTL)?state.exchanges.items:await request('exchanges-list/');
+   state.exchanges={at:now,items:exchanges};await save();
    const he=Array.isArray(exchanges)&&exchanges.find(x=>x.Code===suffix);
    if(!he||he.OperatingMIC!==market.mic||he.Currency!==market.currency)throw fail();
    const symbols=await request('exchange-symbol-list/'+suffix);
    if(!Array.isArray(symbols)||!symbols.length||symbols.length>100000)throw fail();
    const items={};for(const row of symbols){if(row.Exchange===suffix&&row.Currency===market.currency&&supported(row.Code+'.'+suffix)&&typeof row.Name==='string')items[row.Code+'.'+suffix]={name:row.Name.slice(0,120),exchange:market.mic,currency:market.currency};}
-   state.metadata={...state.metadata,[suffix]:{at:now,items}};await save();
+   state.metadata={...state.metadata,[suffix]:{at:now,items}};delete state.catalogAttempts[suffix];await save();
   }
+  if(catalogOnly)return (state.metadata[suffix]??metadata).items;
   const item=Object.hasOwn((state.metadata[suffix]??metadata).items,symbol)&&(state.metadata[suffix]??metadata).items[symbol];
   if(!item)return null;
   if(item.exchange!==market.mic||item.currency!==market.currency||typeof item.name!=='string')throw fail();

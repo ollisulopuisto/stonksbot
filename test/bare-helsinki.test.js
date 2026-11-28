@@ -48,7 +48,7 @@ test('unknown US-path misses persist across restart and never repeatedly probe p
 test('real startup config loads table in mixed and Helsinki-only modes without network',async t=>{
  const {startupProvider}=await import('../src/config.js');const {mkdtemp,rm}=await import('node:fs/promises');const {tmpdir}=await import('node:os');const {join}=await import('node:path');const root=await mkdtemp(join(tmpdir(),'he-startup-'));t.after(()=>rm(root,{recursive:true,force:true}));
  const env={STONKSBOT_PROVIDER:'eodhd',EODHD_API_KEY:'synthetic',EODHD_PERSONAL_USE_CONFIRMED:'yes',STONKSBOT_STATE_DIR:root};
- const p=await startupProvider(env);assert.equal(p.entries.size,174);p.helsinkiProvider.lookup=async s=>quote(s);assert.equal((await p.lookup('MEKKO')).symbol,'MEKKO.HE');assert.equal(await p.lookup('AAPL'),null);
+ const p=await startupProvider(env);assert.equal(p.entries.size,174);p.helsinkiProvider.lookup=async s=>quote(s);p.helsinkiProvider.resolveBare=async()=>[];assert.equal((await p.lookup('MEKKO')).symbol,'MEKKO.HE');assert.equal(await p.lookup('AAPL'),null);
  const mixed=await startupProvider({...env,STONKSBOT_PROVIDER:'finnhub',EODHD_ENABLED:'yes',FINNHUB_API_KEY:'synthetic',FINNHUB_PERSONAL_USE_CONFIRMED:'yes',STONKSBOT_HISTORY_PROVIDER:'alpha-vantage',ALPHAVANTAGE_API_KEY:'synthetic'});assert.equal(mixed.usProvider.constructor.name,'QuoteWithDailyHistory');assert.equal(mixed.entries.size,174);
 });
 test('transient US failure cools only15min, then recovers; clean null remains24h',async t=>{
