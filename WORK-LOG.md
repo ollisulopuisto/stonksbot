@@ -215,3 +215,10 @@ updated while quote/history/evaluator tests retain original data assertions.
 Own review traced config -> name cache/quota -> quote -> summary/plain blocks and
 chart; names plain text, escaped fallback, profile mismatch fails to ticker. No
 raw timestamps or unavailable mood in cards. No real APIs/keys/Slack/deploy.
+
+Rebased onto merged provider#6 and channel-placement#7. Retained delayed65min
+regular-hours stale, outside-hours indicator and OLD DATA after3days. Sanitized
+provider names control/bidi/whitespace with regression coverage. Direct question
+no-trigger gets a brief answer; unavailable stays silent per owner pending any
+approved exception. Chart upload title now also identifies Finnhub quote source
+alongside Alpha daily series. Combined107tests pass.
