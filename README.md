@@ -496,3 +496,61 @@ for every security. Only synthetic responses tested, no key or live API request.
 https://finnhub.io/docs/api/symbol-search
 https://github.com/Finnhub-Stock-API/finnhub-go/blob/master/api/openapi.yaml
 https://www.alphavantage.co/documentation/ (Search Endpoint)
+
+## Bare Helsinki tickers
+
+With Helsinki enabled, $mekko now resolves locally to Marimekko Oyj ($MEKKO.HE).
+The app bundles174name/symbol/.HE routes from a CC0 Finland list, source date
+**September20,2025**, retrieved November28,2026. This is a dated convenience map,
+not a current complete exchange directory. Quote-time HE/XHEL/EUR validation
+remains unchanged, so stale/missing provider listings fail closed. No stock quote,
+metadata API or EODHD quota is spent RESOLVING the bare ticker. Actual quote/history
+and existing identity-validation calls still cost the documented EODHD budget.
+
+Routing rule: table hit selects Helsinki, except collision SBI is ambiguous and
+posts a short choice notice with no quote/reaction. Collisions were checked against
+the official Nasdaq US directory snapshot November27,2026 21:34. NOKIA is Helsinki,
+NOK is the US ticker. Explicit $SBI.HE / $SBI.US selects a venue; .US strips that
+routing suffix before passing to Finnhub. Explicit .HE always works as before.
+Symbols absent from the table keep the US path, so ordinary US tickers do not
+change venue. Future US listings can create new collisions: refresh and review
+before relying on bare symbols, or use explicit suffixes. No exhaustive OTC check.
+
+Table resolution is a startup-loaded Map, including table misses, no lookup API
+or repeated symbol search. Unknown/unavailable US results are negatively cached
+24h in private persistent bare-symbol-misses.json, including failures, so repeat
+unknown requests/restarts do not burn quota. A transient US failure can therefore
+suppress that bare symbol24h; explicit .US bypasses this negative cache. Never
+change/delete provider quota state. One bot process per persistent state root.
+
+Optional STONKSBOT_HELSINKI_SYMBOLS_FILE=/private/path/helsinki-overrides.json:
+
+```json
+{
+  "SBI": {"name": "Your chosen US instrument", "route": "SBI.US"},
+  "CUSTOM": {"name": "KONE Oyj", "route": "KNEBV.HE"},
+  "MEKKO": null
+}
+```
+
+Overrides deliberately select .HE/.US and can add aliases or replace routes;
+null removes a bundled bare mapping, restoring US behavior. Explicit .HE is
+unaffected. Invalid file/schema fails startup. Restart after edits, no hot reload.
+In EODHD-only mode table Helsinki hits work; absent/explicit US routes return no
+card because there is no US provider. A source name labels the canonical returned
+instrument. Unknown table entries never synthesize a quote or mood.
+
+Source/license and refresh:
+https://huggingface.co/datasets/kjhq/Finland-Stock-Symbols-and-Metadata
+CC0-1.0, pinned revision152b96ae7c67a2b30c56b30e2e4ae6b3f94f3a63.
+https://www.nasdaqtrader.com/dynamic/SymDir/nasdaqtraded.txt
+Download/review the source CSV and US directory yourself, then run offline:
+
+```text
+python3 scripts/refresh-helsinki.py --finland-csv /path/finland.csv --us-directory /path/nasdaqtraded.txt --revision <source-commit> --source-date YYYY-MM-DD --retrieved YYYY-MM-DD
+npm test
+```
+
+Review diff/new/delisted symbols and overlap list, verify special suffixes with
+provider metadata, submit PR. Source NDA_FI normalizes to NDA-FI; full names are
+as supplied by the dataset, not typed from memory. No automatic network refresh.

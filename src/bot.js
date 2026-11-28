@@ -70,6 +70,11 @@ export function createHandler({ provider, send, now = Date.now, onError = () => 
         if (delivered.has(symbolKey)) continue;
         const quote = await provider.lookup(symbol);
         if (!quote) continue;
+        if(quote.resolutionNotice){
+          const text=quote.resolutionNotice;
+          await send({channel:event.channel,...(replyMode==='thread'?{thread_ts:/^\d+\.\d+$/.test(event.thread_ts??'')?event.thread_ts:event.ts}:{}),symbol,card:{text,blocks:[{type:'section',text:{type:'plain_text',text}}]},png:null});
+          delivered.set(symbolKey,now()+10*60_000);continue;
+        }
         // Independent of card posting, and only uses this same provider result.
         const verdict=quote.fixture?null:evaluateMood(quote,now(),mood);
         const reaction=verdict?.label === "We're back" ? reactionNames.back : verdict?.label === "It's over" ? reactionNames.over : null;
