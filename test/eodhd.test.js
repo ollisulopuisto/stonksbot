@@ -29,7 +29,7 @@ test('Helsinki full handler validates EUR/XHEL before requesting quote and same-
  assert.equal(q.currency,'EUR');assert.equal(q.priceKind,'delayed-quote');assert.equal(q.exchange,'XHEL');
  assert.equal(s.calls.length,4);assert.equal(q.historySource,q.source);assert.equal(q.history.at(-1).close,109);
  assert.equal(evaluateMood(q,NOW).targetDate,'2026-11-27');
- assert.match(posts[0].card.text,/DELAYED/);assert.doesNotMatch(posts[0].card.text,/REAL-TIME|STALE/);
+ assert.match(posts[0].card.text,/delayed/);assert.doesNotMatch(posts[0].card.text,/REAL-TIME|STALE/);
  assert.match(posts[0].chartTitle,/EODHD/);
  const restart=new EodhdProvider({...s.args,fetchImpl:()=>{throw Error('cache miss');}});
  assert.equal((await restart.lookup('NOKIA.HE')).price,120);

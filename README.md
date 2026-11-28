@@ -420,3 +420,30 @@ requests, deduplication or Slack scopes. Only configured SLACK_CHANNEL_IDS apply
 Card then chart are separate channel posts in channel mode; existing partial
 upload/retry caveat remains. No thread_broadcast or extra notifications API.
 No live Slack client verification, scope change or deployment performed.
+
+## Compact replies and instrument names
+
+Cards now show Name ($TICKER), price/currency, relative quote age and the chart,
+with only a short STALE/DEMO/daily-close marker when relevant. Unavailable mood
+is silent. Triggered over/back labels can remain; no formula/source/timestamp/
+range/disclaimer paragraph in each reply. Provider identity/raw close labels
+remain on the chart and in configuration/docs; metadata retains actual timestamps.
+No new permission to share data is implied. Current Finnhub, Alpha Vantage and
+EODHD general personal-use terms were checked: no explicit requirement to print
+a provider source/disclaimer on every private bot message was found. Custom
+exchange agreements could differ; this is not a redistribution license.
+https://finnhub.io/terms-of-service
+https://www.alphavantage.co/terms_of_service/
+https://eodhd.com/financial-apis/terms-conditions
+
+Finnhub instrument name uses /stock/profile2 (a separate metered request against
+the same60/min budget), cached24h including empty/missing results, persisted.
+Runtime configured Finnhub enables it by default; FINNHUB_RESOLVE_NAMES=no disables
+extra profile calls. If quota/profile/identity fails, the quote still posts with
+ticker fallback. US ETFs may not have a company profile, so ticker fallback is
+expected there. EODHD already supplies the name in exchange-symbol-list metadata;
+no extra lookup needed when combined. Alpha-only daily mode currently falls back
+to the ticker: its daily endpoint has no full name, and no extra search call is
+made against its25/day budget. Full name means the provider's name, not an invented
+shortened brand. Relative daily age describes the date marker, not exact close
+execution time. No API keys or live provider/Slack tests used.

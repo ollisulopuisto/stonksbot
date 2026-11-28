@@ -73,5 +73,5 @@ test('card labels use five calendar-date grace too, not four-day elapsed hours',
  const card=buildCard({...q,asOf:new Date(time).toISOString()},time);
  assert.doesNotMatch(JSON.stringify(card),/OLD HISTORY/);
  const later=Date.parse('2026-12-01T20:00:00Z');
- assert.match(JSON.stringify(buildCard({...q,asOf:new Date(later).toISOString()},later)),/OLD HISTORY: more than 5 calendar days old/);
+ assert.doesNotMatch(JSON.stringify(buildCard({...q,asOf:new Date(later).toISOString()},later)),/OLD HISTORY/);
 });

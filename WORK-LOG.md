@@ -197,3 +197,21 @@ retains parent/root semantics. Own adversarial review traced config -> handler
 -> sender -> card/upload API; preserved threading for both paths, no broadcast.
 Existing history test hardcoded /downloads now uses its test temp directory
 (same portability fix as provider PR). No live Slack/deployment/merge.
+
+## 2026-11-28, compact cards and instrument names
+
+Owner requested price/chart/relative age without highlighted boilerplate, silent
+unavailable mood, then full Name ($TICKER). Checked main/open PRs for overlap:
+separate from provider#6 and placement#7; both will need integration verification.
+Replaced verbose card with one plain-text section and escaped fallback. Daily/demo
+identity and short stale/future markers retained, chart source labels unchanged.
+Name from provider, Finnhub configured profile2 lookup cached24h and metered using
+same persistent minute counter; ticker fallback on absent/failure/quota. EODHD
+already has names; Alpha-only intentionally no extra search calls. Current general
+terms checked, no mandatory per-private-message attribution clause found.
+
+New compact tests failed before implementation; existing expected display tests
+updated while quote/history/evaluator tests retain original data assertions.
+Own review traced config -> name cache/quota -> quote -> summary/plain blocks and
+chart; names plain text, escaped fallback, profile mismatch fails to ticker. No
+raw timestamps or unavailable mood in cards. No real APIs/keys/Slack/deploy.
