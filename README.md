@@ -622,3 +622,40 @@ Ford, Visa, Nordea) are hand-curated and source-directory verified. APLE is a re
 ticker, not an Apple typo: exact cashtags retain priority, as do HELP/TEST/etc.
 Mention ordinary words never inherit ticker priority. Dictionary/name policy is
 conservative: some real names such as news/invesco require explicit ticker.
+
+## Chart ranges
+
+30d is the default. Add7d,3m or1y as a separate token, e.g. `$AAPL 7d`,
+`$MEKKO 3m`, `$REMEDY.HE 1y` or bot mention company name followed by range.
+One range applies to every instrument in the message; first recognized token
+wins. No1d/intraday support. d=calendar days;3m=three calendar months (clamped
+month-end);1y=365days. Chart includes available daily closes in that window,
+weekends/holidays omitted, equally spaced observations. Range appears on chart
+axis/upload title; quote age still refers to price, not last history fetch.
+
+| Source |7d /30d |3m |1y |
+|---|---|---|---|
+| Finnhub without history |no chart, explicit note |no chart |refused |
+| Finnhub + Alpha / Alpha-only |yes, slice compact daily |yes if returned100trading dates cover requested period |refused, free compact100trading dates insufficient |
+| EODHD Helsinki |yes |yes if full returned coverage |documented free pastyear, requires actual account entitlement, not live tested |
+
+Short/new-listing/incomplete history never gets a longer-range label: explicit
+coverage note and no PNG. For3m/1y require source begins within7calendar days of
+requested start (holiday grace), at least2points. Existing daily freshness rules
+still apply. US1y refusal is explicit in the price card, no mislabeled100-day
+chart. EOD request failures/quota also show a plain no-chart note.
+
+Provider quotas unchanged: Alpha compact100daily closes is one request shared
+25/day, same6h superset raw cache used for7d/30d/3m views with coverage checked
+before render, never called1y. EODHD range-keyed persistent history caches, one
+call/history/symbol/range, all calls under20/day. Changing range may cost another
+call; quotes/catalogs shared.7d still fetches40calendar days for the separate
+7session mood baseline.3m/1y fetch requested span; chart slicing does not alter
+mood input. Corporate-action guard examines recent8raw/adjusted ratios so an old
+split outside mood window doesn't change verdict when chart range changes.
+No state reset, paid plan, key or live requests.
+
+Sources: https://www.alphavantage.co/documentation/ (compact100/free vs full premium),
+https://www.alphavantage.co/support/ (25/day),
+https://eodhd.com/financial-apis/api-for-historical-data-and-volumes (pastyear1call),
+https://eodhd.com/pricing (free20/day).

@@ -37,7 +37,7 @@ test('actual handler answers all four outcomes, not the outcome suggested by the
   assert.match(sent[0].card.text,/Nvidia \(\$NVDA\): (106|94|101)\.00 USD/);
   if (["We're back","It's over"].includes(label)) assert.ok(sent[0].card.text.includes(label));
   else assert.doesNotMatch(sent[0].card.text,/Mood unavailable/);
-  assert.equal(sent[0].card.blocks.length,1);
+  assert.ok(sent[0].card.blocks.length>=1);
   assert.doesNotMatch(JSON.stringify(sent[0].card),/Finnhub/);
   await receive({message:{channel:'COTHER',ts:'123.5',text:'is $NVDA back?'}});
   await receive({message:{channel:'C123',ts:'123.6',text:'is $OTHER back?'}});

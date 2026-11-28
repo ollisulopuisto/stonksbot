@@ -1,3 +1,4 @@
+import { rangeStart } from './chart-ranges.js';
 import { helsinkiDate, helsinkiRegularSession } from './helsinki-session.js';
 import { mkdir, open, readFile, rename, stat, unlink, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
@@ -15,11 +16,11 @@ export class EodhdProvider {
   if(typeof apiKey!=='string'||!apiKey||typeof stateDir!=='string'||!stateDir||!Number.isInteger(dailyLimit)||dailyLimit<1||dailyLimit>20||!Number.isInteger(minuteLimit)||minuteLimit<1||minuteLimit>20) throw Error('Set EODHD key, private persistent state directory and limits1..20.');
   Object.assign(this,{apiKey,stateDir:resolve(stateDir),dailyLimit,minuteLimit,fetchImpl,now});this.queue=Promise.resolve();
  }
- lookup(symbol) {
+ lookup(symbol,options={}) {
   if(!supported(symbol))return Promise.resolve(null);
-  const result=this.queue.then(()=>this.locked(symbol));this.queue=result.catch(()=>{});return result;
+  const result=this.queue.then(()=>this.locked(symbol,options));this.queue=result.catch(()=>{});return result;
  }
- async locked(symbol) {
+ async locked(symbol,options) {
   await mkdir(this.stateDir,{recursive:true,mode:0o700});
   const lockPath=join(this.stateDir,'provider.lock');let lock;
   try{lock=await open(lockPath,'wx',0o600);}catch(error){
@@ -27,9 +28,9 @@ export class EodhdProvider {
    let age;try{age=Date.now()-(await stat(lockPath)).mtimeMs;}catch{throw Error('EODHD state lock changed; retry later.');}
    throw Error(age>5*MINUTE?'EODHD lock may be stale; stop all instances and inspect before removal. No lock removed.':'EODHD state busy; one process per key/state directory.');
   }
-  try{return await this.load(symbol);}finally{await lock.close();await unlink(lockPath);}
+  try{return await this.load(symbol,options);}finally{await lock.close();await unlink(lockPath);}
  }
- async load(symbol) {
+ async load(symbol,{range='30d'}={}) {
   const path=join(this.stateDir,'state.json');let state={provider:'eodhd',calls:[],blockedUntil:0,lastSeen:0,metadata:null,quotes:{},histories:{}};
   try{state=JSON.parse(await readFile(path,'utf8'));}catch(error){if(error.code!=='ENOENT')throw fail();}
   const now=this.now();
@@ -77,10 +78,12 @@ export class EodhdProvider {
    state.quotes[symbol]={at:now,quote};await save();
   }
   try{
-   let daily=Object.hasOwn(state.histories,symbol)&&state.histories[symbol];
+   const historyKey=symbol+':'+(range==='7d'?'30d':range);
+   let daily=Object.hasOwn(state.histories,historyKey)&&state.histories[historyKey];
    // A new Helsinki trading date invalidates yesterday's cached history.
    if(!daily||(!retainClosed&&(!fresh(daily,now,DAY)||helsinkiDate(daily.at)!==helsinkiDate(now)))){
-    const from=new Date(now-40*DAY).toISOString().slice(0,10);
+    const requestedFrom=rangeStart(range,now);
+    const from=range==='7d'||range==='30d'?new Date(now-40*DAY).toISOString().slice(0,10):requestedFrom;
     const rows=await request('eod/'+symbol,{from,to:helsinkiDate(now),period:'d',order:'a'});
     if(!Array.isArray(rows)||rows.length<2||rows.length>1000)throw fail();
     let previous='';const history=[];const ratios=[];
@@ -88,13 +91,13 @@ export class EodhdProvider {
      if(!/^\d{4}-\d{2}-\d{2}$/.test(row.date)||!Number.isFinite(Date.parse(row.date))||new Date(row.date).toISOString().slice(0,10)!==row.date||row.date<=previous||row.date>helsinkiDate(now)||!positive(row.close)||!positive(row.adjusted_close))throw fail();
      previous=row.date;history.push({date:row.date,close:row.close});ratios.push(row.adjusted_close/row.close);
     }
-    daily={at:now,history,corporateAction:ratios.some(r=>Math.abs(r/ratios.at(-1)-1)>0.001)};
-    state.histories[symbol]=daily;await save();
+    daily={at:now,from,history,corporateAction:ratios.slice(-8).some(r=>Math.abs(r/ratios.at(-1)-1)>0.001)};
+    state.histories[historyKey]=daily;await save();
    }
    validateQuote({...quote,history:daily.history,historyKind:'daily-close',historySource:quote.source,historyAsOf:daily.history.at(-1).date+'T00:00:00Z'});
    const prior=daily.history.filter(p=>p.date<helsinkiDate(Date.parse(quote.asOf)));
    const mismatch=!prior.length||Math.abs(prior.at(-1).close/quote.previousClose-1)>0.001;
-   return validateQuote({...quote,history:daily.history,historyKind:'daily-close',historySource:quote.source,historyAsOf:daily.history.at(-1).date+'T00:00:00Z',moodUnavailable:daily.corporateAction||mismatch?'Corporate action or previous-close/history mismatch':undefined});
+   return validateQuote({...quote,historyFrom:daily.from,history:daily.history,historyKind:'daily-close',historySource:quote.source,historyAsOf:daily.history.at(-1).date+'T00:00:00Z',moodUnavailable:daily.corporateAction||mismatch?'Corporate action or previous-close/history mismatch':undefined});
   }catch{
    return {...quote,history:[],historyNotice:'EODHD daily history unavailable or quota exhausted; no chart shown.',moodUnavailable:'EODHD same-feed daily history unavailable'};
   }
@@ -103,5 +106,5 @@ export class EodhdProvider {
 
 export class HelsinkiRouter {
  constructor(usProvider,helsinkiProvider){Object.assign(this,{usProvider,helsinkiProvider});}
- lookup(symbol){return symbol.endsWith('.HE')?this.helsinkiProvider.lookup(symbol):this.usProvider.lookup(symbol);}
+ lookup(symbol,options){return symbol.endsWith('.HE')?this.helsinkiProvider.lookup(symbol,options):this.usProvider.lookup(symbol,options);}
 }

@@ -18,10 +18,10 @@ export async function loadHelsinkiSymbols(overridePath) {
 }
 export class StaticHelsinkiRouter {
  constructor(usProvider,helsinkiProvider,entries,statePath,now=Date.now){Object.assign(this,{usProvider,helsinkiProvider,entries,statePath,now});this.queue=Promise.resolve();}
- lookup(symbol){const next=this.queue.then(()=>this.lookupLocked(symbol));this.queue=next.catch(()=>{});return next;}
- async lookupLocked(symbol){
-  if(symbol.endsWith('.HE'))return this.helsinkiProvider.lookup(symbol);
-  if(symbol.endsWith('.US'))return this.usProvider?.lookup(symbol.slice(0,-3))??null;
+ lookup(symbol,options){const next=this.queue.then(()=>this.lookupLocked(symbol,options));this.queue=next.catch(()=>{});return next;}
+ async lookupLocked(symbol,options){
+  if(symbol.endsWith('.HE'))return this.helsinkiProvider.lookup(symbol,options);
+  if(symbol.endsWith('.US'))return this.usProvider?.lookup(symbol.slice(0,-3),options)??null;
   const mapping=this.entries.get(symbol);
   if(!mapping){
    if(!this.usProvider)return null;
@@ -32,7 +32,7 @@ export class StaticHelsinkiRouter {
    if(!misses||typeof misses!=='object'||Array.isArray(misses))misses={};
    misses=Object.fromEntries(Object.entries(misses).filter(([,v])=>v&&Number.isFinite(v.at)&&v.at<=now&&[900000,86400000].includes(v.ttl)&&now-v.at<v.ttl));
    if(Object.hasOwn(misses,symbol))return null;
-   let result,ttl=86400000;try{result=await this.usProvider.lookup(symbol);}catch{result=null;ttl=900000;}
+   let result,ttl=86400000;try{result=await this.usProvider.lookup(symbol,options);}catch{result=null;ttl=900000;}
    if(this.statePath){
     if(!result)misses[symbol]={at:now,ttl};
     if(Object.keys(misses).length>500)delete misses[Object.keys(misses)[0]];
@@ -41,7 +41,7 @@ export class StaticHelsinkiRouter {
    return result;
   }
   if(mapping.ambiguous)return {resolutionNotice:`${symbol} is ambiguous. Use $${symbol}.HE for Helsinki or $${symbol}.US for US.`};
-  const quote=mapping.route.endsWith('.HE')?await this.helsinkiProvider.lookup(mapping.route):await this.usProvider?.lookup(mapping.route.slice(0,-3));
+  const quote=mapping.route.endsWith('.HE')?await this.helsinkiProvider.lookup(mapping.route,options):await this.usProvider?.lookup(mapping.route.slice(0,-3),options);
   return quote?{...quote,name:mapping.name}:null;
  }
 }

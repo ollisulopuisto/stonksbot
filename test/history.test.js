@@ -20,7 +20,7 @@ test('mixed real handler keeps quote and history sources distinct and generates 
  await createHandler({provider,now:()=>now,send:async p=>sent.push(p)})({channel:'C123',ts:'123.4',text:'$AAPL'});
  assert.equal(sent.length,1);assert.match(sent[0].card.text,/260.00 USD.*updated just now/);
  assert.doesNotMatch(JSON.stringify(sent[0].card),/DAILY CLOSE HISTORY/);
- assert.equal(sent[0].chartTitle,'AAPL Alpha Vantage daily closes, not live; quote: Finnhub');
+ assert.equal(sent[0].chartTitle,'30d (partial: 2026-11-25 to 2026-11-27) · AAPL Alpha Vantage daily closes, not live; quote: Finnhub');
  const result=await provider.lookup('AAPL');assert.equal(result.history.at(-1).close,250.12);assert.notEqual(result.history.at(-1).close,result.price);
  assert.ok(sent[0].png.length>1000);await writeFile(join(root,'mixed-chart.png'),sent[0].png);
  // A state directory from the other provider must fail closed, not reuse cache.

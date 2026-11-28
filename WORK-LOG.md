@@ -335,3 +335,26 @@ Mentions alias/exact or6+edit1only; cashtag4+edit1or unique first-wholeword5+pre
 clear lead. Real ticker APLE/HELP priority confirmed by owner via parent, no Apple
 substitution. Reviewed must-quote brand set aliases added from bundled full names.
 138tests pass including297word probe both name modes and actual handler silence.
+
+## 2026-11-28, daily chart ranges
+
+Owner selected30ddefault,7d/3m/1y, explicitly removed1d. Stacked on name-lookup#12
+pending merge, separate from renderer redesign. Range parsing -> provider options
+through mixed/static router -> range-keyed EOD history -> coverage-checked chart
+slice, full raw mood baseline untouched. Alpha compact100raw cache is a shared
+superset,3mcoverage validated, US1y refused plainly. No live entitlement claim.
+
+New tests failed before range forwarding/coverage logic; now parser/calendar month
+clamp, actual handler7d/1y note, long-range insufficient history and persistent
+EOD range cache/network budget tested. Own review traced all wrapper forwarding,
+metadata/quote sharing, response start vs requested range, same-feed mood and
+chart labels. Recent8adjustment ratios only for mood guard, chart span cannot
+introduce old-split verdict changes. No provider quota increase, paid full history,
+real keys/live calls, Slack/deploy/merge.136tests/audit/demo/diff pass, reviewer
+and new owner yes needed. No chart redesign bundled.
+
+Reviewer follow-ups:7d/30dshare EODHD :30dcache and40day baseline fetch. Failing
+regression verified extra7dcall and short3day series mislabeled before fix. New
+listing/incomplete7d/30dactual first date>3days after requestedstart is marked
+partial with actual coverage in PNG/title/card, without claiming new-listing
+cause as fact. Long-range coverage refusal unchanged. Local144tests green.
