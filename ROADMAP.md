@@ -14,3 +14,7 @@
 
 - Future idea from owner: express a mood answer as a Slack emoji reaction.
   Roadmap only, no implementation or reactions:write scope added.
+
+- EODHD Helsinki .HE provider in PR: personal-only, free20calls/day, synthetic
+  validation only; actual entitlement/account and exchange-calendar verification
+  remain deployment work, no signup/paid plan or live requests performed.

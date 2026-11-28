@@ -25,9 +25,9 @@ export function chartScale(points) {
     ticks: Array.from({ length: 5 }, (_, i) => maximum - (maximum - minimum) * i / 4) };
 }
 // Small local PNG renderer. No chart host or user message leaves this process.
-export function chartLabels(points, {symbol='FIXTURE',currency='USD',fixture=true,historyKind=null}={}) {
+export function chartLabels(points, {symbol='FIXTURE',currency='USD',fixture=true,historyKind=null,priceKind=null}={}) {
   const values=points.map(p=>p.close), { low, high, ticks } = chartScale(points);
-  return [`${symbol} - ${historyKind === 'daily-close' ? 'ALPHA VANTAGE DAILY' : fixture?'DEMO FIXTURE':'PROVIDER DATA'}`,`CLOSE / ${currency}`,
+  return [`${symbol} - ${historyKind === 'daily-close' ? (priceKind === 'delayed-quote' ? 'EODHD DAILY' : 'ALPHA VANTAGE DAILY') : fixture?'DEMO FIXTURE':'PROVIDER DATA'}`,`CLOSE / ${currency}`,
     ...ticks.map(value=>`${value.toFixed(2)} ${currency}`),
     ...[points[0],points[Math.floor((points.length-1)/2)],points.at(-1)].map(p=>p.date.slice(0,10)),
     'DATE',`LAST CLOSE ${values.at(-1).toFixed(2)} ${currency}`,`HIGH ${high.toFixed(2)} ${currency}`,`LOW ${low.toFixed(2)} ${currency}`];

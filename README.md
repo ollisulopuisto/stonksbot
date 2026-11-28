@@ -139,8 +139,8 @@ Delete stored data if your data subscription ends, as Finnhub's terms require.
    error, not allow-all. Bare symbols and .A/.B or -A/-B share classes are accepted;
    exchange suffixes such as .HE are not inferred as USD. Finnhub quote responses
    contain no currency/exchange metadata, so this is a market-scope assumption,
-   not automatic exchange verification. Use US USD listings only. No verified
-   Finnish/international coverage. Channel restrictions stay mandatory: set
+   not automatic exchange verification. Use US USD listings only. Finnhub does not verify
+   Finnish/international coverage; optional EODHD Helsinki mode is described below. Channel restrictions stay mandatory: set
    SLACK_CHANNEL_IDS even when the ticker list is unset.
 4. `npm start` under that environment, then `$AAPL` in the allowed channel.
    Expect a threaded card with Finnhub source/timestamp. Quotes cached 15 seconds;
@@ -202,7 +202,7 @@ Keep channels:history and message.channels enabled for public channel messages,
 groups:history and message.groups for private ones, and configure each public channel ID in SLACK_CHANNEL_IDS. Add channels:join
 and reinstall for automatic startup join, or invite manually. Private channels
 still need a manual invitation. There is no private-only filter in code. No channel
-shared with other people and no Peliteoria use. US symbols only; Nasdaq Helsinki
+shared with other people and no Peliteoria use. Finnhub US symbols only; its Nasdaq Helsinki
 coverage is not verified and US ADRs must not be treated as Helsinki listings.
 
 ## Mood labels
@@ -320,3 +320,80 @@ channels do too, so an automatic join may fail and they still need invitation.
 The configured channel gate remains mandatory. Responding means posting the
 existing ticker/mood card, not emoji reactions, and Finnhub visibility must
 remain limited to the owner. No live Slack join or scope installation verified.
+
+
+## Optional EODHD Helsinki quotes (personal-only, not deployed)
+
+EODHD was selected for Helsinki; no account, key, paid plan or live request was
+used to verify this implementation. Current pricing and delayed endpoint docs
+include Free, but older plan summaries differ. Verify actual free Helsinki
+entitlement before relying on it. Data may be indicative market-maker prices,
+not exchange execution prices. No real-time or primary-exchange-price promise.
+
+The free tier has **20 API calls/day**, not unlimited updates for20symbols.
+This bot caps ALL EODHD endpoints together at20calls per rolling24hours and
+20requests per minute, persistently, including failures. Limits can only be
+lowered, not raised by configuration. This is more conservative than a UTC quota
+reset. No polling or retries. One process/key/state root, no other applications
+using that key if you rely on this local budget. Never delete state to reset it.
+
+Use a channel/workspace accessible ONLY to you, no sharing or business use.
+A public Slack channel with one current member can still be joinable/viewable
+by other workspace members. EODHD's personal bot FAQ warns about public channels;
+this flag does not grant a license. Resolve wider audience rights first.
+
+Environment-file settings (not shell commands):
+
+```text
+# Keep Finnhub US mode, add explicit Helsinki routing:
+STONKSBOT_PROVIDER=finnhub
+EODHD_ENABLED=yes
+EODHD_PERSONAL_USE_CONFIRMED=yes
+EODHD_API_KEY=<your-key-in-private-env-file-only>
+EODHD_DAILY_LIMIT=20
+EODHD_MINUTE_LIMIT=20
+```
+
+Keep existing Finnhub credentials, personal-use confirmation, persistent state
+root and SLACK_CHANNEL_IDS. Alternatively STONKSBOT_PROVIDER=eodhd selects
+Helsinki only, with no Finnhub key. Do not set EODHD_ENABLED for fixture or
+Alpha-only mode. EODHD uses its own eodhd/ child directory and key via environment
+only; never put real keys in the repository. Requests require the vendor's query
+authentication, use no redirects and never expose raw errors or URLs in logs.
+A stale lock is reported but never removed automatically.
+
+Only .HE symbols are routed, e.g. $NOKIA.HE or $KNEBV.HE. Before quoting, the
+provider checks the HE exchange catalog has OperatingMIC XHEL and EUR, then checks
+the exact symbol's HE/EUR listing. It does not substitute US ADRs, guess currency
+or infer quote availability from a suffix. Missing catalog symbols return no
+card; failed validation fails closed. Metadata refreshes every24hours and costs
+2calls (exchange list + whole HE symbol list). Initial symbol quote+history costs
+another2calls. Metadata access itself can fail if the free account lacks rights.
+
+Quotes normally15-20minutes delayed are cached60minutes to conserve20calls/day;
+unchanged timestamps are always shown, NEVER called real-time. After65minutes
+source age they are labelled stale. Thus a cached card can be stale before the
+hourly cache expires, not silently re-dated or auto-refreshed. Closures leave old
+quotes; there is no full exchange holiday/hours calendar. Mood requires the same
+Helsinki local date and a weekday, not proof the exchange is open. Daily history
+refreshes on the next Helsinki date or after24hours,1call/symbol. Synthetic tests
+cover catalog validation and all quota accounting, not actual key entitlement.
+
+EODHD's own previousClose supplies the session denominator. Its raw close series
+supplies the separately labelled daily chart and prior-session mood baseline,
+never Alpha/Finnhub data. Split/dividend adjustment-ratio changes or a previous
+close/history mismatch disable mood; raw charts remain labelled raw daily closes.
+This is a conservative corporate-action guard, not a full action processor.
+History/quota failures preserve a valid delayed quote with an explicit no-chart/
+no-mood notice. History dates, timestamps and future/old data guards still apply.
+Slack files:write is needed for charts. Existing channel gates/dedup/retry limits
+stay unchanged. Finnhub US provider and optional Alpha history are unchanged.
+
+Official references:
+- https://eodhd.com/pricing
+- https://eodhd.com/financial-apis/api-limits
+- https://eodhd.com/financial-apis/exchanges-api-list-of-tickers-and-trading-hours
+- https://eodhd.com/financial-apis/live-realtime-stocks-api
+- https://eodhd.com/financial-apis/api-for-historical-data-and-volumes
+- https://eodhd.com/help/ai-tools
+- https://eodhd.com/financial-apis/terms-conditions

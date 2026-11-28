@@ -1,10 +1,11 @@
+import { EodhdProvider, HelsinkiRouter } from './eodhd.js';
 import { currencyMap } from './tickers.js';
 import { join } from 'node:path';
 import { QuoteWithDailyHistory } from './history.js';
 import { FixtureProvider } from './provider.js';
 import { FinnhubProvider } from './finnhub.js';
 import { AlphaVantageProvider } from './alpha-vantage.js';
-export function configuredProvider(env = process.env) {
+function baseProvider(env) {
   if (!env.STONKSBOT_PROVIDER || env.STONKSBOT_PROVIDER === 'fixture') {
     if (env.STONKSBOT_ALLOW_FIXTURE_POSTING !== 'yes') throw Error('Fixture posting requires explicit STONKSBOT_ALLOW_FIXTURE_POSTING=yes. Offline demo needs no opt-in.');
     return new FixtureProvider();
@@ -29,4 +30,16 @@ export function configuredProvider(env = process.env) {
   if (!env.STONKSBOT_STATE_DIR) throw Error('Set a private persistent STONKSBOT_STATE_DIR.');
   return new AlphaVantageProvider({ apiKey: env.ALPHAVANTAGE_API_KEY, currencies, stateDir: join(env.STONKSBOT_STATE_DIR, 'alpha-vantage'),
     dailyLimit: Number(env.ALPHAVANTAGE_DAILY_LIMIT ?? 25) });
+}
+
+export function configuredProvider(env = process.env) {
+  const enabled = env.STONKSBOT_PROVIDER === 'eodhd' || env.EODHD_ENABLED === 'yes';
+  if (!enabled) return baseProvider(env);
+  if (env.EODHD_PERSONAL_USE_CONFIRMED !== 'yes') throw Error('Confirm EODHD sole-user personal use and no public/shared data access before enabling.');
+  if (!env.STONKSBOT_STATE_DIR) throw Error('Set a private persistent STONKSBOT_STATE_DIR.');
+  const helsinki = new EodhdProvider({apiKey:env.EODHD_API_KEY,stateDir:join(env.STONKSBOT_STATE_DIR,'eodhd'),
+    dailyLimit:Number(env.EODHD_DAILY_LIMIT ?? 20),minuteLimit:Number(env.EODHD_MINUTE_LIMIT ?? 20)});
+  if (env.STONKSBOT_PROVIDER === 'eodhd') return helsinki;
+  if (env.STONKSBOT_PROVIDER !== 'finnhub') throw Error('EODHD_ENABLED routing requires Finnhub US mode, or select eodhd alone.');
+  return new HelsinkiRouter(baseProvider(env),helsinki);
 }
