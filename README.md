@@ -484,7 +484,9 @@ including misses, counted against the SAME25/day rolling budget as daily history
 Use ALPHAVANTAGE_RESOLVE_NAMES=no to opt out. Mixed Finnhub+Alpha history does NOT
 run Alpha name search, avoiding duplicate metadata calls. Existing cached daily
 quotes can retain ticker fallback until the normal6h quote cache expires; new
-names appear on next quote refresh. No quota bypass or cache deletion needed.
+names appear on next quote refresh. No quota bypass or cache deletion needed. Name-only Note/Information responses
+cache a24h ticker fallback without blocking quotes; HTTP429still pauses the
+shared provider budget24h.
 
 Name lookup is best effort: absent/ambiguous exact match, no name field, quota,
 network errors, missing endpoint rights or explicit opt-out still retain ticker

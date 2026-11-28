@@ -99,7 +99,7 @@ export class AlphaVantageProvider {
             const searchUrl=new URL('https://www.alphavantage.co/query');searchUrl.search=new URLSearchParams({function:'SYMBOL_SEARCH',keywords:symbol,apikey:this.apiKey});
             const response=await this.fetchImpl(searchUrl,{signal:AbortSignal.timeout(15000),redirect:'error'});
             if(response.status===429)state.blockedUntil=now+DAY;
-            if(response.ok){const found=await response.json();if(found?.Note||found?.Information)state.blockedUntil=now+DAY;
+            if(response.ok){const found=await response.json(); // A name-only notice is cached locally, not a quote entitlement decision.
               const exact=Array.isArray(found?.bestMatches)?found.bestMatches.filter(x=>x['1. symbol']===symbol&&x['8. currency']===tickerCurrency(this.currencies,symbol)):[];
               if(exact.length===1)name=cleanName(exact[0]['2. name'])||symbol;
             }

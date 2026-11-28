@@ -39,10 +39,12 @@ test('last quota slot goes to quote, no name bypass or loss of quote',async t=>{
  }
 });
 
-test('Alpha name entitlement notices pause shared budget but preserve quote',async t=>{
+test('Alpha name-only entitlement notice caches fallback but leaves quote budget usable',async t=>{
  const s=await setup(t,AlphaVantageProvider,{change:(b,u)=>u.searchParams.get('function')==='SYMBOL_SEARCH'?{Information:'synthetic limit'}:b});
  const q=await new AlphaVantageProvider(s.options).lookup('QQQ');assert.equal(q.name,'QQQ');
- const state=JSON.parse(await readFile(join(s.stateDir,'state.json'),'utf8'));assert.equal(state.blockedUntil,now+86400000);assert.equal(state.calls.length,2);
+ const state=JSON.parse(await readFile(join(s.stateDir,'state.json'),'utf8'));assert.equal(state.blockedUntil,0);assert.equal(state.calls.length,2);
+ assert.equal(state.names.QQQ.name,'QQQ');
+ const later=new AlphaVantageProvider({...s.options,now:()=>now+7*3600000});await later.lookup('QQQ');assert.equal(s.calls.length,3); // quote refresh, no repeated name request
 });
 test('configured Alpha-only resolves names, mixed history does not duplicate it',async t=>{
  const {configuredProvider}=await import('../src/config.js');const s=await setup(t,AlphaVantageProvider);

@@ -261,3 +261,8 @@ request -> name cache -> card plain-text sanitation. Names never invented,
 missing name/rights/network/quota still ticker fallback, explicitly documented.
 No keys/live provider requests, signup, purchase or deployment.114tests pass,
 audit/demo/diff checks pass; exact-head CI/reviewer gate required before merge.
+
+Independent review: Alpha name-only Note/Information should not stop all daily
+quotes. Failing-first test, then keep name miss cached24h without global pause;
+HTTP429still blocks shared quota. Test refreshes quote7h later with no repeated
+metadata call. No live traffic, existing quote-endpoint notices still pause.
