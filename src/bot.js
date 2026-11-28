@@ -39,7 +39,7 @@ export function buildCard(quote, now = Date.now(), mood = {}, question = false) 
   // Unknown mood is silence, not a warning or a fabricated answer.
   const answer=result?.basis!=='unavailable'?(result?.label || (question?'no trigger':null)):null;
   const label=quote.name && quote.name !== quote.symbol ? `${quote.name.replace(/[\p{Cc}\p{Cf}]/gu,' ').replace(/\s+/g,' ').trim().slice(0,120)} ($${quote.symbol})` : quote.symbol;
-  const text=`${label}: ${quote.price.toFixed(2)} ${quote.currency}. ${ageText}${status?` · ${status}`:''}${answer?` · ${answer}`:''}`;
+  const text=`${label}${quote.exchange?` · ${quote.exchange==='XETR'?'Xetra':quote.exchange==='XHEL'?'Helsinki':quote.exchange} (${quote.exchange})`:''}: ${quote.price.toFixed(2)} ${quote.currency}. ${ageText}${status?` · ${status}`:''}${answer?` · ${answer}`:''}`;
   const fallback=text.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'})[c]);
   return {text:fallback,blocks:[{type:'section',text:{type:'plain_text',text,emoji:false}}]};
 }
@@ -62,13 +62,21 @@ export function createHandler({ provider, send, now = Date.now, onError = () => 
     const questions = new Set(moodQuestionTickers(event.text));
     const matchedNames=new Map();
     const notices=[];
+    const key = `${event.channel}:${event.ts}`;
+    const time = now();
+    for(const [k,until] of reacted)if(until<=time)reacted.delete(k);
+    for (const [k, until] of delivered) if (until <= time) delivered.delete(k);
+    if (delivered.has(key) || inFlight.has(key) || active >= 4) return;
+    inFlight.add(key); active++;
+    try {
     if(nameIndex){
       const cashtag=!!symbols.length;
       const queries=symbols.length?symbols:(event.type==='app_mention'&&/<@[A-Z0-9]+>/.test(event.text??'')?[plainMessage(event.text).replace(/\s+(7d|30d|3m|1y)[?.!]?\s*$/i,'').trim()]:[]);
       symbols=[];
       for(const query of queries){
-        if(/\.(HE|US|DE|XETRA)$/.test(query)){symbols.push(query);continue;}
+        if(/\.(HE|US|DE|XETRA)$/.test(query)||(cashtag&&await provider.hasExactSymbol?.(query))){symbols.push(query);continue;}
         const resolved=resolveName(nameIndex,query,{strict:false,namesOnly:!cashtag,mode:cashtag?'cashtag':'mention'});
+        if(cashtag&&((resolved.route&&resolved.route!==query)||resolved.strong&&resolved.notice)&&await provider.hasExactSymbol?.(query,{discover:true})){symbols.push(query);continue;}
         if(resolved.notice){
           if(resolved.strong&&cashtag)notices.push(resolved.notice);
           else if(cashtag)symbols.push(query.toUpperCase().replace(/-([AB])$/,'.$1'));
@@ -82,13 +90,6 @@ export function createHandler({ provider, send, now = Date.now, onError = () => 
       symbols=[...new Set(symbols)].slice(0,3);
     }
     if (!symbols.length&&!notices.length) return;
-    const key = `${event.channel}:${event.ts}`;
-    const time = now();
-    for(const [k,until] of reacted)if(until<=time)reacted.delete(k);
-    for (const [k, until] of delivered) if (until <= time) delivered.delete(k);
-    if (delivered.has(key) || inFlight.has(key) || active >= 4) return;
-    inFlight.add(key); active++;
-    try {
       for(const text of notices){await send({channel:event.channel,...(replyMode==='thread'?{thread_ts:/^\d+\.\d+$/.test(event.thread_ts??'')?event.thread_ts:event.ts}:{}),card:{text,blocks:[{type:'section',text:{type:'plain_text',text}}]},png:null});}
       for (const symbol of symbols) {
         const symbolKey = `${key}:${symbol}`;
@@ -112,7 +113,7 @@ export function createHandler({ provider, send, now = Date.now, onError = () => 
         const card = buildCard(quote, now(), mood, questions.has(symbol));
         const chart=chartForRange(quote,range,now());
         if(chart.notice){card.text+=' · '+chart.notice;card.blocks.push({type:'context',elements:[{type:'plain_text',text:chart.notice}]});}
-        await send({ channel: event.channel, ...(replyMode === 'thread' ? { thread_ts: /^\d+\.\d+$/.test(event.thread_ts ?? '') ? event.thread_ts : event.ts } : {}), symbol, card, chartTitle: (chart.label??range)+' · '+(quote.historyKind === 'daily-close' ? `${symbol} ${quote.priceKind === 'delayed-quote' ? 'EODHD' : 'Alpha Vantage'} daily closes, not live${quote.priceKind === 'us-quote' ? '; quote: Finnhub' : ''}` : quote.fixture ? `${symbol} DEMO fixture history` : `${symbol} daily close history`), png: chart.points.length >= 2 ? chartPng(chart.points,640,320,{ ...quote, range:chart.label??range, historyKind: quote.historyKind }) : null });
+        await send({ channel: event.channel, ...(replyMode === 'thread' ? { thread_ts: /^\d+\.\d+$/.test(event.thread_ts ?? '') ? event.thread_ts : event.ts } : {}), symbol, card, chartTitle: (chart.label??range)+' · '+(quote.historyKind === 'daily-close' ? `${quote.symbol} ${quote.priceKind === 'delayed-quote' ? 'EODHD' : 'Alpha Vantage'} daily closes, not live${quote.priceKind === 'us-quote' ? '; quote: Finnhub' : ''}` : quote.fixture ? `${quote.symbol} DEMO fixture history` : `${quote.symbol} daily close history`), png: chart.points.length >= 2 ? chartPng(chart.points,640,320,{ ...quote, range:chart.label??range, historyKind: quote.historyKind }) : null });
         delivered.set(symbolKey, now() + 10 * 60_000);
       }
       delivered.set(key, now() + 10 * 60_000);

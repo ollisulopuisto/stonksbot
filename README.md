@@ -720,3 +720,35 @@ Sources checked2026-11-28:
 - https://eodhd.com/pricing
 - https://eodhd.com/financial-apis/live-realtime-stocks-api
 - https://www.eurexgroup.com/xetra-en/trading/trading-calendar-and-trading-hours
+
+### Bare-symbol European fallback
+
+After confirmed US absence, match the exact bare code in Xetra and Helsinki
+catalogs, ETFs included. A valid US quote wins. Multiple EU listings, or a known
+US identity whose quote is missing, return explicit .US/.DE/.HE choices instead
+of guessing. Explicit suffixes and existing Helsinki overrides remain unchanged.
+Finnhub all-zero quotes alone do not establish absence: a separately metered US
+search must return a well-formed empty result. Timeouts, auth/quota failures and
+malformed responses never redirect. US-only absence is cached24h, transient
+failures15min. Cache schema2 discards the previous conflated miss entries.
+
+Validated symbol catalogs persist in eodhd/state.json for7days, fetched on demand
+only, with failed-refresh backoff24h. Both markets share the exchange-list cache,
+lock and20/day budget. Warm catalogs cost0calls across restarts; cold discovery
+of both markets costs3metadata calls (1exchange list+2symbol lists), plus quote
+and history if a match is selected. Cold Finnhub zero-quote confirmation costs
+one extra Finnhub search. No background refresh. Exact European codes precede
+fuzzy names. Name-disambiguation may need catalog discovery before a name route
+is chosen; if catalog validation fails, it does not guess the company instead.
+Cards show the canonical instrument and exchange; chart titles use that same
+resolved identity. Provider prices, history and mood are never mixed across venues.
+
+Limit: no bundled top500Xetra seed is included yet. The official instrument
+CSV has identifiers but no ranking; available monthly equity-segment turnover
+workbooks do not establish a combined500equity/ETF ranking or explicit open
+redistribution grant. See official instrument/turnover/disclaimer sources:
+https://www.eurexgroup.com/xetra-en/instruments/instruments
+https://www.cashmarket.deutsche-boerse.com/cash-en/Data-Tech/statistics/Turnover-Statistics/monthly-turnover-statistics
+https://www.eurexgroup.com/xetra-en/disclaimer
+A bundled unverified seed would still require live catalog validation before
+quoting. No real keys or live quote endpoints were used during development.

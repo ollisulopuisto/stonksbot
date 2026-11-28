@@ -78,6 +78,19 @@ export class FinnhubProvider {
       } catch { throw fail(); }
       // /quote contains no symbol/currency or free historical series. The
       // The selected market scope is US/USD; an optional map restricts it further.
+      // Zero quotes can be transient too. Confirm absence with an exact US search,
+      // counting the request under the same lock/budget. Malformed results fail closed.
+      if(body&&['c','h','l','o','pc','t'].every(k=>body[k]===0)){
+        if(state.calls.length>=this.minuteLimit||state.calls.filter(t=>now-t<1000).length>=30)throw fail();
+        state.calls.push(now);await save();
+        const search=new URL('https://finnhub.io/api/v1/search');search.search=new URLSearchParams({q:symbol,exchange:'US'});
+        try{const r=await this.fetchImpl(search,{headers:{'X-Finnhub-Token':this.apiKey},signal:AbortSignal.timeout(15000),redirect:'error'});
+         if(r.status===429){state.blockedUntil=now+MINUTE;await save();throw fail();}
+         if(!r.ok)throw fail();const found=await r.json();
+         if(Number.isInteger(found?.count)&&found.count===0&&Array.isArray(found.result)&&found.result.length===0)return null;
+        }catch{throw fail();}
+        throw fail();
+      }
       if (!Number.isFinite(body?.c) || body.c <= 0 || !Number.isInteger(body?.t) || body.t <= 0 || body.t * 1000 > now + 60000) throw fail();
       // Exact symbol search covers stocks AND ETFs, one metered name request.
       // Opt-in avoids changing the quote-only quota for existing installations.

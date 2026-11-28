@@ -1,3 +1,4 @@
+import { readFile } from 'node:fs/promises';
 import { loadHelsinkiSymbols, StaticHelsinkiRouter } from './helsinki-symbols.js';
 import { EodhdProvider, HelsinkiRouter } from './eodhd.js';
 import { currencyMap } from './tickers.js';
@@ -33,19 +34,20 @@ function baseProvider(env) {
     resolveNames: env.ALPHAVANTAGE_RESOLVE_NAMES !== 'no', dailyLimit: Number(env.ALPHAVANTAGE_DAILY_LIMIT ?? 25) });
 }
 
-export function configuredProvider(env = process.env, helsinkiSymbols) {
+export function configuredProvider(env = process.env, helsinkiSymbols,usSymbols=new Set()) {
   const enabled = env.STONKSBOT_PROVIDER === 'eodhd' || env.EODHD_ENABLED === 'yes';
   if (!enabled) return baseProvider(env);
   if (env.EODHD_PERSONAL_USE_CONFIRMED !== 'yes') throw Error('Confirm EODHD sole-user personal use and no public/shared data access before enabling.');
   if (!env.STONKSBOT_STATE_DIR) throw Error('Set a private persistent STONKSBOT_STATE_DIR.');
   const helsinki = new EodhdProvider({apiKey:env.EODHD_API_KEY,stateDir:join(env.STONKSBOT_STATE_DIR,'eodhd'),
     dailyLimit:Number(env.EODHD_DAILY_LIMIT ?? 20),minuteLimit:Number(env.EODHD_MINUTE_LIMIT ?? 20)});
-  if (env.STONKSBOT_PROVIDER === 'eodhd') return helsinkiSymbols ? new StaticHelsinkiRouter(null,helsinki,helsinkiSymbols,join(env.STONKSBOT_STATE_DIR,'bare-symbol-misses.json')) : helsinki;
+  if (env.STONKSBOT_PROVIDER === 'eodhd') return helsinkiSymbols ? new StaticHelsinkiRouter(null,helsinki,helsinkiSymbols,join(env.STONKSBOT_STATE_DIR,'bare-symbol-misses.json'),Date.now,usSymbols) : helsinki;
   if (env.STONKSBOT_PROVIDER !== 'finnhub') throw Error('EODHD_ENABLED routing requires Finnhub US mode, or select eodhd alone.');
-  return helsinkiSymbols ? new StaticHelsinkiRouter(baseProvider(env),helsinki,helsinkiSymbols,join(env.STONKSBOT_STATE_DIR,'bare-symbol-misses.json')) : new HelsinkiRouter(baseProvider(env),helsinki);
+  return helsinkiSymbols ? new StaticHelsinkiRouter(baseProvider(env),helsinki,helsinkiSymbols,join(env.STONKSBOT_STATE_DIR,'bare-symbol-misses.json'),Date.now,usSymbols) : new HelsinkiRouter(baseProvider(env),helsinki);
 }
 
 export async function startupProvider(env=process.env){
  const enabled=env.STONKSBOT_PROVIDER==='eodhd'||env.EODHD_ENABLED==='yes';
- return configuredProvider(env,enabled?await loadHelsinkiSymbols(env.STONKSBOT_HELSINKI_SYMBOLS_FILE):undefined);
+ const usSymbols=enabled?new Set(JSON.parse(await readFile(new URL('../data/us-symbol-names.json',import.meta.url),'utf8')).entries.map(x=>x.symbol)):new Set();
+ return configuredProvider(env,enabled?await loadHelsinkiSymbols(env.STONKSBOT_HELSINKI_SYMBOLS_FILE):undefined,usSymbols);
 }

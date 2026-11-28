@@ -397,3 +397,16 @@ no arbitrary suffix currencies. Session Berlin DST, wrongMIC/currency/noncanonic
 quote, exact ETFcashtags tests. Existing HE quota/restart/source tests retained.
 No live Slack/provider calls, demo not entitled, no registration.148tests/audit0.
 No merge until owner new yes, no deploy. Source/runtime disclaimer in README.
+
+Bare-symbol fallback: checked main22b4e69 and open/recentPRs, no overlap.
+Failing-first2new router tests failed on main. Added exact US-absence fallback,
+US-wins collision rules, explicit multi-market notices, separate versioned US
+miss cache, canonical card/title identity. Finnhub zero quotes require empty
+US search confirmation because upstream issue54 records transient zero quotes.
+Persisted7daycatalogs, shared exchange-list cache,24hfailed-refresh backoff,
+existing accounting/lock.158tests, audit0. Own adversarial review traced config,
+name matching, duplicate-event gate, miss migration, catalog queue/lock, history,
+mood, chart titles and exchange identity. Moved potentially metered name checks
+inside dedup/inflight gate. Fixed catalog-only refresh bypass when closed.
+Before/after card pixels inspected. Seed request remains blocked on ranked
+source/reuse basis, not disguised as complete. No merge/deploy/livekeys.
