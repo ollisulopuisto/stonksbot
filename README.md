@@ -575,19 +575,20 @@ shown are source full names, e.g. Apple Inc. - Common Stock ($AAPL), not invente
 short labels. Exact ticker identities win before name search. Explicit .HE/.US
 routes bypass fuzzy matching; US-only providers accept the explicit .US route.
 
-Matching: lowercase/diacritic/punctuation normalization, strip company suffixes
-for comparison only; display full source name. Runtime requires an EXACT whole
-normalized core name, not a prefix/ordinary-word similarity. Exact ticker identity
-wins first for cashtags. Unknown cashtags pass unchanged to the original provider
-path (BRK-B normalizes to BRK.B), preserving OTC/new-listing support; a name-index
-miss is not proof a ticker doesn't exist. Multiple exact core-name candidates
-produce a short Did you mean list, no quote/reaction. App mentions require a
-strong exact core-name match or a cashtag; ordinary help/test/thanks/status and
-weak/prefix google/hello/ping stay silent, not chatter. Mood questions retain
-their question flag after $apple -> AAPL resolution. Name matching consumes no
-quota, normal provider requests still do. Source snapshot/new listings remain
-limits. Current cashtag parser is single-token10chars, mention accepts a single
-multiword company name; multiword multi-name queries are out of scope.
+Matching: normalize case/diacritics/punctuation and company suffixes for ranking,
+but display full source name. Exact ticker identity wins first. Reviewed brand
+aliases google/alphabet -> GOOGL Class A, facebook -> META are hand-curated, not
+provider data; use GOOG explicitly for Alphabet Class C. Exact core-name score1.2,
+prefix score0.75+0.2*(query/name length), otherwise Levenshtein similarity.
+Noncommon/ETF/warrant/preferred approximate matches lose0.12; exact names retain
+identity. Require score>=0.79 (4+chars) or0.95 (3chars), runner-up gap>=0.12. Close
+cashtag candidates show up to3suggestions; no plausible match passes original
+provider path (BRK-B -> BRK.B). $google cannot become an unrelated prefix ETF.
+Appl remains a suggestion because AppLovin/Applied are close. Marimeko typo can
+resolve Marimekko. Mention low confidence or ordinary help/test/thanks/status/
+hello/ping stays silent, no chatter. Mood-question flag follows mapped route.
+Name index misses don't prove a ticker absent, OTC/new-listing paths preserved.
+Single multiword company supported for mentions; multiword multi-name out of scope.
 
 Slack setup: add bot OAuth scope app_mentions:read and subscribe bot event
 app_mention, reinstall app after scopes change. Existing message.channels/groups

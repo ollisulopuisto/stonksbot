@@ -66,12 +66,13 @@ export function createHandler({ provider, send, now = Date.now, onError = () => 
       symbols=[];
       for(const query of queries){
         if(/\.(HE|US)$/.test(query)){symbols.push(query);continue;}
-        const resolved=resolveName(nameIndex,query,{strict:true,namesOnly:!cashtag});
+        const resolved=resolveName(nameIndex,query,{strict:false,namesOnly:!cashtag});
         if(resolved.notice){
-          if(resolved.strong)notices.push(resolved.notice);
+          if(resolved.strong&&cashtag)notices.push(resolved.notice);
           else if(cashtag)symbols.push(query.toUpperCase().replace(/-([AB])$/,'.$1'));
           continue;
         }
+        if(!resolved.route){if(cashtag)symbols.push(query.toUpperCase());continue;}
         const route=resolved.route.replace(/-([AB])$/,'.$1');
         if(questions.has(query))questions.add(route);
         symbols.push(route);if(resolved.name)matchedNames.set(route,resolved.name);

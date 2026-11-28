@@ -321,3 +321,10 @@ requires whole normalized core equality, no prefix/fuzzy auto-quote. Mention
 ordinary words silent, exact-name ambiguity asks. Cashtag exact-name $apple still
 works; question flag follows mapped route. Snapshot redistribution terms explicitly
 unverified in README. Multiword multi-name requests out of scope.132tests pass.
+
+Owner requested fuzzy restored after strict-name review fix. Added failing-first
+brand/typo tests then conservative prefix/edit-distance with source security-type
+ranking, exact name boost, clear lead requirement and ordinary-word silence.
+Hand-curated Google/Alphabet Class A and Facebook aliases separately flagged,
+source links included. Google never DEPW, hello/ping never MOMO/PASW, OTC/new
+cashtags pass when low match. Appl deliberately asks due close alternatives.

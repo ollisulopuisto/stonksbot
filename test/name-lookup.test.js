@@ -33,11 +33,15 @@ test('multiple instruments or suggestion plus instrument never reacts ambiguousl
 test('unindexed cashtags pass through, BRK-B normalizes, strict names still resolve',async()=>{
  const calls=[];const handler=createHandler({nameIndex:index,provider:{lookup:async s=>{calls.push(s);return null;}},send:async()=>{}});
  for(const [i,s]of ['BRK-B','NSRGY','NEWLISTING','google','hello','ping','apple'].entries())await handler({channel:'C1',ts:`9.${i}`,text:'$'+s});
- assert.deepEqual(calls,['BRK.B','NSRGY','NEWLISTING','GOOGLE','HELLO','PING','AAPL.US']);
+ assert.deepEqual(calls,['BRK.B','NSRGY','NEWLISTING','GOOGL.US','HELLO','PING','AAPL.US']);
 });
 test('ordinary app mentions stay silent, strict names work, resolved mood question retains flag',async()=>{
  const sent=[],calls=[];const handler=createHandler({nameIndex:index,provider:{lookup:async s=>{calls.push(s);return {...quote('AAPL'),price:101,name:'Apple'};}},send:async p=>sent.push(p),now:()=>Date.parse('2026-11-27T18:00:00Z')});
- for(const [i,s]of ['help','test','thanks','status','google','hello','ping'].entries())await handler({channel:'C1',ts:`8.${i}`,type:'app_mention',text:'<@B123> '+s});
+ for(const [i,s]of ['help','test','thanks','status','hello','ping'].entries())await handler({channel:'C1',ts:`8.${i}`,type:'app_mention',text:'<@B123> '+s});
  assert.equal(sent.length,0);assert.equal(calls.length,0);
  await handler({channel:'C1',ts:'8.8',text:'is $apple over?'});assert.match(sent[0].card.text,/no trigger/);
+});
+test('fuzzy names honor reviewed brands and never known prefix false positives',()=>{
+ for(const [query,symbol]of [['google','GOOGL'],['facebook','META'],['marimeko','MEKKO.HE']])assert.equal(resolveName(index,query,{strict:false}).symbol,symbol);
+ for(const query of ['hello','ping','help','test','thanks','status'])assert.equal(resolveName(index,query,{strict:false,namesOnly:true}).symbol,undefined);
 });
