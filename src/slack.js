@@ -1,6 +1,7 @@
+import { slackSender } from './slack-send.js';
 import { App } from '@slack/bolt';
 import { configuredProvider } from './config.js';
-import { createHandler } from './bot.js';
+import { createHandler, replyOptions } from './bot.js';
 import { moodOptions } from './mood.js';
 import { allowedChannels, channelHandler, joinAllowedPublicChannels } from './slack-events.js';
 
@@ -11,11 +12,9 @@ const app = new App({ token: process.env.SLACK_BOT_TOKEN, appToken: process.env.
 const handler = createHandler({
   provider,
   mood: moodOptions(),
+  ...replyOptions(),
   onError: () => console.error('Quote handling failed; no raw provider payload logged.'),
-  send: async ({ channel, thread_ts, symbol, card, png, chartTitle }) => {
-    await app.client.chat.postMessage({ channel, thread_ts, ...card, unfurl_links: false, unfurl_media: false });
-    if (png) await app.client.files.uploadV2({ channel_id: channel, thread_ts, file: png, filename: `${symbol}-history.png`, title: chartTitle });
-  },
+  send: slackSender(app.client),
 });
 app.message(channelHandler(channels, handler));
 const failedJoins = await joinAllowedPublicChannels(app.client, channels);

@@ -46,7 +46,7 @@ test('real handler sends price cards and local PNGs threaded, ignores repeats an
   await handler({ ...event, ts: '123.457', bot_id: 'B1' });
   await handler({ ...event, ts: '123.458', subtype: 'message_changed' });
   assert.equal(sent.length, 2);
-  assert.equal(sent[0].thread_ts, event.ts);
+  assert.equal(Object.hasOwn(sent[0],'thread_ts'),false);
   assert.equal(sent[0].symbol, 'AAPL');
   assert.ok(Buffer.isBuffer(sent[0].png));
 });

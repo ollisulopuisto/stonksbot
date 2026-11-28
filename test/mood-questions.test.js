@@ -33,7 +33,7 @@ test('actual handler answers all four outcomes, not the outcome suggested by the
   const sent=[];
   const receive=channelHandler(allowedChannels('C123'),createHandler({provider:{lookup:async s=>s==='NVDA'?{...base,...change}:null},send:async p=>sent.push(p),now:()=>now}));
   await receive({message:{channel:'C123',ts:'123.4',thread_ts:'122.3',text:'is $NVDA over or back?'}});
-  assert.equal(sent.length,1);assert.equal(sent[0].thread_ts,'122.3');
+  assert.equal(sent.length,1);assert.equal(Object.hasOwn(sent[0],'thread_ts'),false);
   assert.ok(sent[0].card.text.startsWith(`NVDA: ${label}`));
   assert.equal(sent[0].card.blocks[1].text.text,`NVDA: ${label}.`);
   assert.match(JSON.stringify(sent[0].card),/Finnhub/);
