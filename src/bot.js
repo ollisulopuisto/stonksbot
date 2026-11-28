@@ -10,7 +10,7 @@ const safe = text => String(text).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '
 export function buildCard(quote, now = Date.now()) {
   validateQuote(quote);
   const age = now - Date.parse(quote.asOf);
-  const status = quote.fixture ? 'DEMO FIXTURE, not a live price' : age < -60_000 ? 'INVALID FUTURE TIMESTAMP, not a current quote' : age > 15 * 60_000 ? 'STALE, not a current quote' : 'Provider quote, may be delayed';
+  const status = quote.fixture ? 'DEMO FIXTURE, not a live price' : quote.priceKind === 'daily-close' ? `DAILY CLOSE, not a live price; UTC timestamp denotes trading date only${age > 4 * 86400000 ? '; OLD DATA: more than4days old' : ''}` : age < -60_000 ? 'INVALID FUTURE TIMESTAMP, not a current quote' : age > 15 * 60_000 ? 'STALE, not a current quote' : 'Provider quote, may be delayed';
   const prices = quote.history.map(p => p.close);
   const summary = `${quote.symbol}: ${quote.price.toFixed(2)} ${quote.currency}. ${status}. As of ${quote.asOf}.`;
   return {
