@@ -436,17 +436,12 @@ https://finnhub.io/terms-of-service
 https://www.alphavantage.co/terms_of_service/
 https://eodhd.com/financial-apis/terms-conditions
 
-Finnhub instrument name uses /stock/profile2 (a separate metered request against
-the same60/min budget), cached24h including empty/missing results, persisted.
-Runtime configured Finnhub enables it by default; FINNHUB_RESOLVE_NAMES=no disables
-extra profile calls. If quota/profile/identity fails, the quote still posts with
-ticker fallback. US ETFs may not have a company profile, so ticker fallback is
-expected there. EODHD already supplies the name in exchange-symbol-list metadata;
-no extra lookup needed when combined. Alpha-only daily mode currently falls back
-to the ticker: its daily endpoint has no full name, and no extra search call is
-made against its25/day budget. Full name means the provider's name, not an invented
-shortened brand. Relative daily age describes the date marker, not exact close
-execution time. No API keys or live provider/Slack tests used.
+Instrument names use exact-symbol metadata lookup with ticker fallback if none
+is safely available. See Stock and ETF name lookup update below for endpoints,
+cache and quota costs. EODHD uses its already-fetched catalog; no extra name call.
+Relative daily age describes the date marker, not exact close execution time.
+No API keys or live provider/Slack tests used.
+
 
 ## Independent mood emoji reactions
 

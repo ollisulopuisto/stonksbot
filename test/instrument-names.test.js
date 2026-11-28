@@ -38,3 +38,16 @@ test('last quota slot goes to quote, no name bypass or loss of quote',async t=>{
   assert.equal((await new Provider(s.options).lookup('QQQ')).name,'QQQ');assert.equal(s.calls.length,1);
  }
 });
+
+test('Alpha name entitlement notices pause shared budget but preserve quote',async t=>{
+ const s=await setup(t,AlphaVantageProvider,{change:(b,u)=>u.searchParams.get('function')==='SYMBOL_SEARCH'?{Information:'synthetic limit'}:b});
+ const q=await new AlphaVantageProvider(s.options).lookup('QQQ');assert.equal(q.name,'QQQ');
+ const state=JSON.parse(await readFile(join(s.stateDir,'state.json'),'utf8'));assert.equal(state.blockedUntil,now+86400000);assert.equal(state.calls.length,2);
+});
+test('configured Alpha-only resolves names, mixed history does not duplicate it',async t=>{
+ const {configuredProvider}=await import('../src/config.js');const s=await setup(t,AlphaVantageProvider);
+ const env={STONKSBOT_PROVIDER:'alpha-vantage',ALPHAVANTAGE_API_KEY:'synthetic',STONKSBOT_STATE_DIR:s.stateDir};
+ assert.equal(configuredProvider(env).resolveNames,true);
+ const mixed=configuredProvider({...env,STONKSBOT_PROVIDER:'finnhub',FINNHUB_API_KEY:'synthetic',FINNHUB_PERSONAL_USE_CONFIRMED:'yes',STONKSBOT_HISTORY_PROVIDER:'alpha-vantage'});
+ assert.equal(mixed.historyProvider.resolveNames,false);
+});
