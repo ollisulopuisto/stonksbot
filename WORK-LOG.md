@@ -96,3 +96,20 @@ Tests cover every documented phrasing, uppercase variants, ignored code/links,
 word boundaries, all four actual outcomes, threading, excluded channel/ticker
 and ordinary-card compatibility. No quota/scope/deploy change or merge. No live
 Slack client/provider request verified; local synthetic pixels checked separately.
+
+
+## 2026-11-28, broader whole-question recognition
+
+Owner requested better phrase recognition; independent review identified prefix
+matches such as over 100 and back at 200. Branch from merged PR4, no overlapping
+open PR. Replaced prefix regex with explicit whole-question patterns, sharing
+existing sanitizer/cashtag cap. Added English/Finnish word order, timing/filler,
+mood and state questions, retaining deterministic matching and no extra calls.
+
+Regression first failed on is $NVDA over 100. Tests now cover all documented
+forms, all six reported false positives through actual handler, further price
+continuations, BRK.B, multiple questions, original accepted variants and ticker
+cap. Own review traced sentence boundaries, class-share dots, punctuation, regex
+anchors/length, sanitizer, per-symbol matching and unchanged evaluator/provider/
+channel/card paths. No formula/layout/dependency/scope changes. Full tests, audit,
+demo and diff checks pass. No live market/Slack, deploy or merge performed.

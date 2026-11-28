@@ -258,20 +258,46 @@ questions currently receive the same English meme labels, not a translated
 investment claim. "Pohjalla" is treated as a mood question, not a price-bottom
 forecast.
 
-Recognized forms (case-insensitive; optional punctuation; any valid cashtag):
+Accepted whole-question patterns (case-insensitive; `$X` means any supported
+cashtag, including share classes):
 
-- `is $NVDA over or back`, `is $NVDA back or over`
-- `is $NVDA back`, `is $NVDA back yet`, `is $NVDA over`, `is $NVDA done`
-- `onko $NVDA over vai back`, `onko $NVDA back vai over`
-- `onko $NVDA over`, `onko $NVDA back`
-- `onko $NVDA takaisin`, `onko $NVDA palannut`, `joko $NVDA on takaisin`
-- `onko $NVDA pohjalla`, `onko $NVDA ohi`
-- `onko $NVDA nousussa`, `onko $NVDA laskussa`
+- English state: `[is] $X [is] [still|already] STATE [TIME]`.
+  STATE is `over or back`, `back or over`, `back`, `over`, or `done`.
+  TIME is `yet`, `now`, `already`, `today`, `again`, or `right now`.
+  Examples: `is $NVDA over now?`, `$NVDA over or back?`, `$NVDA is back again?`.
+- English mood: `what's the mood on $X`, `what is the mood for $X`
+  (`on` and `for` work with either opening); `how is $X` or `how's $X`.
+  Optional final `doing`, `looking`, `today`, or `now` applies to these forms.
+- Finnish state: `[onko|joko] $X [on] [jo|vielä|nyt|taas] STATE [TIME]`.
+  An alternative order is `$X [onko|joko] [jo|vielä|nyt|taas] STATE [TIME]`.
+  STATE is `over vai back`, `back vai over`, `over`, `back`, `takaisin`,
+  `palannut`, `pohjalla`, `ohi`, `nousussa`, `laskussa`, or `[vielä] pelissä`.
+  TIME is `jo`, `vielä`, `nyt`, `taas`, or `tänään`.
+  Examples: `onko $NVDA vielä pelissä?`, `joko $NVDA on takaisin?`,
+  `$NVDA onko nyt nousussa?`.
+- Finnish mood: `miltä $X näyttää [nyt|tänään]`,
+  `miten $X menee [nyt|tänään]`, `miten $X voi [nyt|tänään]`,
+  `mikä [on] $X[:n] fiilis [nyt|tänään]`,
+  `mikä [on] $X[:n] tilanne [nyt|tänään]`.
+  Examples: `miltä $NVDA näyttää?`, `mikä on $NVDA:n tilanne nyt?`.
 
-Finnish forms also accept optional `on` after the ticker. These are bounded
-patterns, not general language understanding. Bare ticker names without `$` are
-not commands. Code blocks, inline code, links and URLs are ignored as before.
-Other cashtags still get the regular price card, even in an unrecognized question.
+Square brackets above are optional slots, `|` means one alternative, not literal
+input. One optional greeting/filler `hey`, `please`, `hei`, `no` or `noh` can
+precede the question, and final `please` or `kiitos` can follow, separated by a
+space or comma. The recognized phrase must then end the question, with optional
+punctuation/whitespace. `?`, `!`, semicolon, newline and a period followed by
+whitespace/end separate questions; periods inside `BRK.B` are preserved.
+
+Price or other continuations do not match: `is $NVDA over 100?`,
+`is $AAPL back at 200 yet?`, `is $TSLA done reporting?`,
+`onko $NVDA ohi 100 dollarin?`, `is $NVDA back to normal?`,
+`is $NVDA over-valued?`. They keep normal cards. Each question is checked as a
+whole so unrelated prose cannot make a partial phrase trigger.
+
+These are deterministic patterns, not general language understanding or LLM
+calls. Bare ticker names without `$` are not commands. Code blocks, inline code,
+links and URLs are ignored as before. Other cashtags still get the regular card,
+even in an unrecognized question. No extra provider requests.
 Up to three symbols per message, the same channel/ticker restrictions, source
 rights, provider quotas, freshness rules, threading and retry caveats apply.
 Unsupported/provider-rejected tickers still produce no card; there is no guessed
