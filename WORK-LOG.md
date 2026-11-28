@@ -75,3 +75,24 @@ Own follow-up review traced configuration -> provider constructors -> lookup and
 cached identity -> composed history/card, and Slack channel gate -> real handler.
 New tests failed on old behavior first; full suite now passes. No deployment or
 merge, real keys/provider requests, Slack installation or client-layout testing.
+
+
+## 2026-11-28, direct mood questions
+
+Owner asked for direct over/back questions and English/Finnish variants. Checked
+latest main/branches/recent PRs; mood PR3 already merged, no overlap. Added bounded
+question detection reusing sanitized cashtag extraction and existing mood/card
+path, not a second provider request or handler. Direct questions put the actual
+four-state answer first in card and notification text; the same source/price/
+history/formula details follow. Ordinary cashtags retain their original card.
+Finnish forms use the English meme labels and do not forecast a market bottom.
+
+Own review traced sanitization -> ticker cap -> per-symbol question state ->
+provider result -> evaluator -> summary/blocks -> Slack channel gate. Confirmed
+mixed question/nonquestion symbols do not leak question state, absent/out-of-list
+tickers never get invented cards, demos answer unavailable, and requested sign
+cannot bias result. New tests failed before implementation; full suite passes.
+Tests cover every documented phrasing, uppercase variants, ignored code/links,
+word boundaries, all four actual outcomes, threading, excluded channel/ticker
+and ordinary-card compatibility. No quota/scope/deploy change or merge. No live
+Slack client/provider request verified; local synthetic pixels checked separately.
