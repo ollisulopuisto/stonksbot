@@ -1,6 +1,6 @@
+import {marketSession} from './eodhd-symbols.js';
 import { requestedRange,chartForRange } from './chart-ranges.js';
 import { resolveName } from './name-lookup.js';
-import { helsinkiRegularSession } from './helsinki-session.js';
 import { chartPng } from './chart.js';
 import { questionSymbols } from './questions.js';
 import { validateQuote } from './provider.js';
@@ -32,8 +32,8 @@ export function buildCard(quote, now = Date.now(), mood = {}, question = false) 
   const age=now-Date.parse(quote.asOf), daily=quote.priceKind==='daily-close';
   const delayed=quote.priceKind==='delayed-quote';
   const old=delayed&&age>3*86400000;
-  const stale=daily?oldDailyDate(quote.asOf,now):age>(delayed?65:15)*60000&&(!delayed||helsinkiRegularSession(now));
-  const status=quote.fixture?'DEMO':age < -60000?'INVALID TIME':old?'OLD DATA':stale?'STALE':delayed?(helsinkiRegularSession(now)?'delayed':'outside regular hours, delayed'):null;
+  const stale=daily?oldDailyDate(quote.asOf,now):age>(delayed?65:15)*60000&&(!delayed||marketSession(now,quote.symbol));
+  const status=quote.fixture?'DEMO':age < -60000?'INVALID TIME':old?'OLD DATA':stale?'STALE':delayed?(marketSession(now,quote.symbol)?'delayed':'outside regular hours, delayed'):null;
   const ageText=daily?relativeAge(quote.asOf,now).replace('updated','daily close age'):relativeAge(quote.asOf,now);
   const result=quote.fixture?null:evaluateMood(quote,now,mood);
   // Unknown mood is silence, not a warning or a fabricated answer.
@@ -67,7 +67,7 @@ export function createHandler({ provider, send, now = Date.now, onError = () => 
       const queries=symbols.length?symbols:(event.type==='app_mention'&&/<@[A-Z0-9]+>/.test(event.text??'')?[plainMessage(event.text).replace(/\s+(7d|30d|3m|1y)[?.!]?\s*$/i,'').trim()]:[]);
       symbols=[];
       for(const query of queries){
-        if(/\.(HE|US)$/.test(query)){symbols.push(query);continue;}
+        if(/\.(HE|US|DE|XETRA)$/.test(query)){symbols.push(query);continue;}
         const resolved=resolveName(nameIndex,query,{strict:false,namesOnly:!cashtag,mode:cashtag?'cashtag':'mention'});
         if(resolved.notice){
           if(resolved.strong&&cashtag)notices.push(resolved.notice);

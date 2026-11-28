@@ -388,3 +388,12 @@ stronger but behind line.149tests pass (weekend3:1gap,tick dates,year rollover,
 invalid/reversed dates), actual pixels inspected30d/7d/1y/partial. Prototype file
 untracked and not committed. No provider changes. Own review traced dates into
 coords, ticks, endpoint marker and labels; no point-index/date-position mismatch.
+Xetra own adversarial review: checked main/branches/open PRs, chart PR#15kept
+separate. Failing-first six-form actual handler test, then canonical alias routing.
+Traced delayed-quote consumers beyond diff: validator,mood,card status,session,
+chart range1yeligibility and attribution, wrappers/config,cache migration/quota.
+Per-exchange metadata, canonical caches alias share, shared rolling20/day lock,
+no arbitrary suffix currencies. Session Berlin DST, wrongMIC/currency/noncanonical
+quote, exact ETFcashtags tests. Existing HE quota/restart/source tests retained.
+No live Slack/provider calls, demo not entitled, no registration.148tests/audit0.
+No merge until owner new yes, no deploy. Source/runtime disclaimer in README.

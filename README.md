@@ -693,3 +693,30 @@ starts, year beneath January. Stronger horizontal and slightly lighter vertical
 guides are behind the line. Footer states actual coverage, including partial data.
 No invented weekend points, straight connections only. Date-axis loop bounded
 at1001calendar days, input dates must increase. Custom tiny output remains caveat.
+### Xetra cashtags
+
+Case-insensitive `$eunl`, `$EUNL`, `$eunl.de`, `$EUNL.DE`, `$bmw.de`, `$BMW.DE`
+are supported when EODHD is enabled. `.DE` maps explicitly to EODHD `.XETRA`,
+and only bare EUNL has a curated Xetra default. Canonical returned symbols are
+EUNL.XETRA/BMW.XETRA. ETFs are allowed by exact cashtag, not fuzzy company names.
+HE/XETRA only: no arbitrary EODHD suffix guessing, US fallback or currency guess.
+Exchange catalogue must confirm XETR/EUR and symbol catalogue must confirm each
+listing. Name comes from catalogue. Shared EODHD quota/lock; per-exchange metadata,
+per-canonical-symbol quote/history cache,7d/30dshared, wider ranges separately.
+Existing flat HE metadata schema is read without dropping quota/history state.
+
+Xetra uses Europe/Berlin09:00-17:30weekday session for fresh mood eligibility,
+not a holiday/open-status feed. Same-feed history/previous-close/split guards and
+stale safeguards unchanged. No fresh mood outside regular hours or bad identity.
+Free pricing currently advertises20calls/day and1yrglobal stocks/ETF history;
+live endpoint includes free plan with15-20min delayed snapshots. Actual key
+entitlement not tested. No real API key, registration or live provider calls used.
+EUNL/BMWare not in demo-key whitelist. No paid upgrade or added dependency.
+
+Sources checked2026-11-28:
+- https://eodhd.com/financial-summary/EUNL.XETRA
+- https://eodhd.com/financial-summary/BMW.XETRA
+- https://eodhd.com/financial-apis/exchanges-api-list-of-tickers-and-trading-hours
+- https://eodhd.com/pricing
+- https://eodhd.com/financial-apis/live-realtime-stocks-api
+- https://www.eurexgroup.com/xetra-en/trading/trading-calendar-and-trading-hours
