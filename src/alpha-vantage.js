@@ -1,23 +1,23 @@
 import { mkdir, open, readFile, rename, stat, unlink, writeFile } from 'node:fs/promises';
 import { resolve, join } from 'node:path';
 import { validateQuote } from './provider.js';
+import { tickerCurrency, validCurrencies } from './tickers.js';
 
 const DAY = 86400000;
 const fail = () => new Error('Alpha Vantage unavailable or invalid data; no raw response logged.');
 export class AlphaVantageProvider {
   constructor({ apiKey, currencies, stateDir, dailyLimit = 25, cacheMs = 6 * 3600000, fetchImpl = fetch, now = Date.now }) {
     if (typeof apiKey !== 'string' || !apiKey || typeof stateDir !== 'string' || !stateDir ||
-        !currencies || typeof currencies !== 'object' || Array.isArray(currencies) || !Object.keys(currencies).length ||
+        !validCurrencies(currencies, false) ||
         !Number.isInteger(dailyLimit) || dailyLimit < 1 || dailyLimit > 25 ||
-        !Number.isFinite(cacheMs) || cacheMs < 3600000 || cacheMs > DAY ||
-        Object.entries(currencies).some(([s, c]) => !/^[A-Z][A-Z0-9.-]{0,15}$/.test(s) || !/^[A-Z]{3}$/.test(c))) {
-      throw Error('Set Alpha Vantage key, private persistent state directory and explicit symbol currencies; limit 1..25.');
+        !Number.isFinite(cacheMs) || cacheMs < 3600000 || cacheMs > DAY) {
+      throw Error('Set Alpha Vantage key, private persistent state directory and optional symbol currencies (default US/USD); limit 1..25.');
     }
-    Object.assign(this, { apiKey, currencies: { ...currencies }, stateDir: resolve(stateDir), dailyLimit, cacheMs, fetchImpl, now });
+    Object.assign(this, { apiKey, currencies: currencies === undefined ? undefined : { ...currencies }, stateDir: resolve(stateDir), dailyLimit, cacheMs, fetchImpl, now });
     this.queue = Promise.resolve();
   }
   lookup(symbol) {
-    if (!Object.hasOwn(this.currencies, symbol)) return Promise.resolve(null);
+    if (!tickerCurrency(this.currencies, symbol)) return Promise.resolve(null);
     const result = this.queue.then(() => this.lookupLocked(symbol));
     this.queue = result.catch(() => {});
     return result;
@@ -48,7 +48,7 @@ export class AlphaVantageProvider {
       const cached = Object.hasOwn(state.cache, symbol) ? state.cache[symbol] : null;
       if (cached && now >= cached.fetchedAt && now - cached.fetchedAt < this.cacheMs) {
         const quote = validateQuote(cached.quote);
-        if (quote.symbol !== symbol || quote.currency !== this.currencies[symbol] || quote.fixture !== false || quote.priceKind !== 'daily-close') throw fail();
+        if (quote.symbol !== symbol || quote.currency !== tickerCurrency(this.currencies, symbol) || quote.fixture !== false || quote.priceKind !== 'daily-close') throw fail();
         return quote;
       }
       if (now < state.blockedUntil || state.calls.length >= this.dailyLimit) throw Error('Alpha Vantage local rolling-24h quota exhausted. No request sent.');
@@ -85,7 +85,7 @@ export class AlphaVantageProvider {
       }).sort((a, b) => a.date.localeCompare(b.date));
       const last = history.at(-1);
       if (!last || Date.parse(last.date) > now) throw fail();
-      const quote = validateQuote({ symbol, name: symbol, price: last.close, currency: this.currencies[symbol],
+      const quote = validateQuote({ symbol, name: symbol, price: last.close, currency: tickerCurrency(this.currencies, symbol),
         asOf: last.date + 'T00:00:00Z', source: 'Alpha Vantage daily unadjusted close', fixture: false, priceKind: 'daily-close', history });
       state.cache[symbol] = { fetchedAt: now, quote };
       await save();

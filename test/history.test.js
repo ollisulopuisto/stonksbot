@@ -39,3 +39,18 @@ test('configuration enforces provider-specific child directories and US currency
  assert.notEqual(p.quoteProvider.stateDir,p.historyProvider.stateDir);
  assert.equal(p.historyProvider.currencies.AAPL,'USD');
 });
+
+test('rolling mood survives provider composition and real handler configuration',async()=>{
+ const time=Date.parse('2026-11-27T18:00:00Z');
+ const dates=['2026-11-16','2026-11-17','2026-11-18','2026-11-19','2026-11-20','2026-11-23','2026-11-24','2026-11-25'];
+ const history=dates.map((date,i)=>({date,close:100*1.01**i}));
+ const q={symbol:'AAPL',name:'AAPL',price:102.5,previousClose:100,currency:'USD',asOf:new Date(time).toISOString(),source:'Finnhub',fixture:false,priceKind:'us-quote',history:[]};
+ const daily={...q,price:history.at(-1).close,asOf:'2026-11-25T00:00:00Z',source:'Alpha Vantage',priceKind:'daily-close',history};
+ const provider=new QuoteWithDailyHistory({lookup:async()=>q},{lookup:async()=>daily});
+ for(const multiplier of [2,3]) {
+  const sent=[];await createHandler({provider,now:()=>time,mood:{multiplier},send:async p=>sent.push(p)})({channel:'C123',ts:'123.4',text:'$AAPL'});
+  assert.match(sent[0].card.text,multiplier===2?/We're back/:/No mood trigger/);
+  assert.match(sent[0].card.text,/Session move \+2.50%.*baseline source: Alpha Vantage/);
+  assert.equal((await provider.lookup('AAPL')).history.at(-1).close,history.at(-1).close);
+ }
+});

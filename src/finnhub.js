@@ -1,23 +1,23 @@
 import { mkdir, open, readFile, rename, stat, unlink, writeFile } from 'node:fs/promises';
 import { resolve, join } from 'node:path';
 import { validateQuote } from './provider.js';
+import { tickerCurrency, validCurrencies } from './tickers.js';
 
 const MINUTE = 60000;
 const fail = () => new Error('Finnhub unavailable or invalid data; no raw response logged.');
 export class FinnhubProvider {
   constructor({ apiKey, currencies, stateDir, minuteLimit = 60, cacheMs = 15000, fetchImpl = fetch, now = Date.now }) {
     if (typeof apiKey !== 'string' || !apiKey || typeof stateDir !== 'string' || !stateDir ||
-        !currencies || typeof currencies !== 'object' || Array.isArray(currencies) || !Object.keys(currencies).length ||
+        !validCurrencies(currencies, true) ||
         !Number.isInteger(minuteLimit) || minuteLimit < 1 || minuteLimit > 60 ||
-        !Number.isFinite(cacheMs) || cacheMs < 15000 || cacheMs > 15000 ||
-        Object.entries(currencies).some(([s, c]) => !/^[A-Z][A-Z0-9.-]{0,15}$/.test(s) || c !== 'USD')) {
-      throw Error('Set Finnhub key, private persistent state directory and explicit symbol currencies; US symbols mapped to USD; limit 1..60.');
+        !Number.isFinite(cacheMs) || cacheMs < 15000 || cacheMs > 15000) {
+      throw Error('Set Finnhub key, private persistent state directory and optional symbol currencies; default US/USD; limit 1..60.');
     }
-    Object.assign(this, { apiKey, currencies: { ...currencies }, stateDir: resolve(stateDir), minuteLimit, cacheMs, fetchImpl, now });
+    Object.assign(this, { apiKey, currencies: currencies === undefined ? undefined : { ...currencies }, stateDir: resolve(stateDir), minuteLimit, cacheMs, fetchImpl, now });
     this.queue = Promise.resolve();
   }
   lookup(symbol) {
-    if (!Object.hasOwn(this.currencies, symbol)) return Promise.resolve(null);
+    if (!tickerCurrency(this.currencies, symbol)) return Promise.resolve(null);
     const result = this.queue.then(() => this.lookupLocked(symbol));
     this.queue = result.catch(() => {});
     return result;
@@ -48,7 +48,7 @@ export class FinnhubProvider {
       const cached = Object.hasOwn(state.cache, symbol) ? state.cache[symbol] : null;
       if (cached && now >= cached.fetchedAt && now - cached.fetchedAt < this.cacheMs) {
         const quote = validateQuote(cached.quote);
-        if (quote.symbol !== symbol || quote.currency !== this.currencies[symbol] || quote.fixture !== false || quote.priceKind !== 'us-quote') throw fail();
+        if (quote.symbol !== symbol || quote.currency !== tickerCurrency(this.currencies, symbol) || quote.fixture !== false || quote.priceKind !== 'us-quote') throw fail();
         return quote;
       }
       if (now < state.blockedUntil || state.calls.length >= this.minuteLimit || state.calls.filter(t => now - t < 1000).length >= 30) throw Error('Finnhub local rolling-minute quota exhausted. No request sent.');
@@ -74,9 +74,10 @@ export class FinnhubProvider {
         body = await response.json();
       } catch { throw fail(); }
       // /quote contains no symbol/currency or free historical series. The
-      // explicit operator allowlist defines US coverage; never infer a suffix.
+      // The selected market scope is US/USD; an optional map restricts it further.
       if (!Number.isFinite(body?.c) || body.c <= 0 || !Number.isInteger(body?.t) || body.t <= 0 || body.t * 1000 > now + 60000) throw fail();
-      const quote = validateQuote({ symbol, name: symbol, price: body.c, currency: this.currencies[symbol],
+      const quote = validateQuote({ symbol, name: symbol, price: body.c, currency: tickerCurrency(this.currencies, symbol),
+        ...(Number.isFinite(body.pc) && body.pc > 0 ? { previousClose: body.pc } : {}),
         asOf: new Date(body.t * 1000).toISOString(), source: 'Finnhub real-time US quote', fixture: false, priceKind: 'us-quote', history: [] });
       state.cache[symbol] = { fetchedAt: now, quote };
       await save();

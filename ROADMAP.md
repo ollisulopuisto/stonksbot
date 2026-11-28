@@ -5,9 +5,9 @@
 - Decide data source, usage/display rights, audience and freshness model before
   current-price operation. Around50calls/day is the planning target, not a quota
   this prototype promises.
-- Owner asked for "It's over" and "We're back" and clarified this is an Odd Lots
-  thing. Exact trigger behavior is not defined. Possible ticker mood labels on
-  sharp drops/rebounds with configurable thresholds is an assistant hypothesis,
-  NOT an approved specification. No automatic thresholds or alerts in v1.
+- Mood follow-up: on-demand card labels compare same-provider session return
+  with mean absolute daily returns over 7 preceding trading sessions, default 3x,
+  configurable 5..7 sessions / 2..3x, fixed 5% fallback for short/flat history.
+  No background alerts or message emoji reactions. PR awaiting owner merge go.
 - Add live Slack UI verification, exchange/timezone-aware stale rules, delivery
   retry state and persistence before claiming production readiness.
