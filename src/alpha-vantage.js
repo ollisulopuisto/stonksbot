@@ -1,4 +1,4 @@
-import { mkdir, open, readFile, rename, unlink, writeFile } from 'node:fs/promises';
+import { mkdir, open, readFile, rename, stat, unlink, writeFile } from 'node:fs/promises';
 import { resolve, join } from 'node:path';
 import { validateQuote } from './provider.js';
 
@@ -27,7 +27,14 @@ export class AlphaVantageProvider {
     const lockPath = join(this.stateDir, 'provider.lock');
     let lock;
     try { lock = await open(lockPath, 'wx', 0o600); }
-    catch { throw Error('Provider state is busy. One bot instance per state directory; inspect stale lock only when stopped.'); }
+    catch (error) {
+      if (error.code !== 'EEXIST') throw Error('Provider state lock could not be created. Check directory permissions.');
+      let age;
+      try { age = Date.now() - (await stat(lockPath)).mtimeMs; }
+      catch { throw Error('Provider state lock changed during inspection. Retry later.'); }
+      if (age > 5 * 60000) throw Error('Provider state lock is more than 5 minutes old and may be stale. Stop all bot instances and inspect before removing it. No lock removed.');
+      throw Error('Provider state is busy. One bot instance per state directory; inspect stale lock only when stopped.');
+    }
     try {
       const path = join(this.stateDir, 'state.json');
       let state = { calls: [], cache: {}, blockedUntil: 0 };
@@ -64,7 +71,7 @@ export class AlphaVantageProvider {
       if (body?.Note || body?.Information) {
         state.blockedUntil = now + DAY;
         await save();
-        throw Error('Alpha Vantage reported a limit or entitlement notice. Paused for24h; no automatic retries.');
+        throw Error('Alpha Vantage reported a limit or entitlement notice. Paused for 24h; no automatic retries.');
       }
       if (body?.['Error Message']) throw fail();
       const meta = body?.['Meta Data'];

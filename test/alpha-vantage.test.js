@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, readFile, writeFile, rm } from 'node:fs/promises';
+import { mkdtemp, readFile, writeFile, rm, utimes } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { AlphaVantageProvider } from '../src/alpha-vantage.js';
@@ -45,7 +45,7 @@ test('failed requests count durably and rolling24h quota does not reset at midni
 test('provider notice pauses requests across restarts and raw notice never escapes', async t => {
   let count = 0;
   const { provider, options } = await setup(t, { fetchImpl: async () => { count++; return { ok: true, json: async () => ({ Note: 'secret-key free quota exceeded' }) }; } });
-  await assert.rejects(provider.lookup('AAPL'), e => !e.message.includes('secret-key'));
+  await assert.rejects(provider.lookup('AAPL'), { message: 'Alpha Vantage reported a limit or entitlement notice. Paused for 24h; no automatic retries.' });
   await assert.rejects(new AlphaVantageProvider(options).lookup('AAPL'), /quota/); assert.equal(count, 1);
 });
 test('bad payloads produce no quote, no fallback invented fixtures, and handler sends nothing', async t => {
@@ -82,6 +82,18 @@ test('real handler can render provider result as PNG without live Slack or crede
 test('daily-close card flags old dates and never claims a current quote', async t => {
   const { provider } = await setup(t);
   const quote = await provider.lookup('AAPL');
-  assert.match(buildCard(quote, now + 7 * 86400000).text, /OLD DATA/);
+  assert.equal(buildCard(quote, now + 7 * 86400000).text, 'AAPL: 250.12 USD. DAILY CLOSE, not a live price; UTC timestamp denotes trading date only; OLD DATA: more than 4 days old. As of 2026-11-27T00:00:00Z.');
   assert.throws(() => new AlphaVantageProvider({ apiKey: 'x', stateDir: '/tmp/x', currencies: ['USD'] }));
+});
+
+
+test('aged lock is detected but never removed while another process may own it', async t => {
+  const { provider, stateDir, calls } = await setup(t);
+  const lock = join(stateDir, 'provider.lock');
+  await writeFile(lock, '');
+  const old = new Date(Date.now() - 6 * 60000);
+  await utimes(lock, old, old);
+  await assert.rejects(provider.lookup('AAPL'), { message: 'Provider state lock is more than 5 minutes old and may be stale. Stop all bot instances and inspect before removing it. No lock removed.' });
+  assert.equal(await readFile(lock, 'utf8'), '');
+  assert.equal(calls.length, 0);
 });

@@ -127,7 +127,7 @@ budget counts requests before sending, including errors/timeouts. Notices pause
 new requests24hours. No automatic retry, paid signup, or increased-quota bypass.
 Sharing this key with another app can still hit the provider's own limit. Do not
 run separate state directories for the same key. A crashed process may leave
-`provider.lock`: stop all instances and inspect before manually removing it;
+`provider.lock` (detected as potentially stale after 5 minutes, never auto-deleted): stop all instances and inspect before manually removing it;
 never delete `state.json` to reset a quota. State is not a secret-key store.
 
 Daily-close date uses midnight UTC only as a date marker, not an exchange close
