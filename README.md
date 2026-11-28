@@ -135,7 +135,8 @@ Delete stored data if your data subscription ends, as Finnhub's terms require.
    above, Alpha Vantage supplies up to 100 raw daily closes for a separate chart.
    Keep `files:write` scope for this chart. Card and upload title identify Alpha
    Vantage daily history, not live/intraday. Quote and history are never blended;
-   no cross-feed return is calculated. History failure leaves an explicit
+   no cross-feed price return is calculated. Mood compares a Finnhub-only session
+   return with a separately attributed Alpha Vantage volatility baseline. History failure leaves an explicit
    unavailable/no-chart notice while preserving the valid Finnhub quote.
    Stop via service manager or Ctrl-C. Check channel ID, app invitation, scopes
    and events if no response. Never include real tokens in screenshots or logs.
@@ -166,7 +167,7 @@ older than 4 days is flagged old. Requires Slack files:write for chart upload.
 
 Provider tests use invented responses, fake keys and injected fetch. No actual
 provider request/key, Slack install/layout or VPS deployment verified. Existing
-upload retry/dedup caveats apply. Mood reactions remain out of scope.
+upload retry/dedup caveats apply. Mood is a card label, not an automatic Slack emoji reaction or background alert.
 
 Official references checked:
 - https://finnhub.io/docs/api/quote (US real-time quotes, auth, rate limits)
@@ -182,3 +183,49 @@ https://www.alphavantage.co/terms%5Fof%5Fservice/ . Combining two clearly attrib
 series for the same personal viewer does not waive either provider's conditions.
 No shared Slack channel or Peliteoria use. US symbols only; Nasdaq Helsinki
 coverage is not verified and US ADRs must not be treated as Helsinki listings.
+
+## Mood labels
+
+On-demand cards say "We're back" for a large positive session move and "It's over"
+for a large negative one. Otherwise they say "No mood trigger". Defaults:
+
+```text
+STONKSBOT_MOOD_WINDOW=7
+STONKSBOT_MOOD_MULTIPLIER=3
+STONKSBOT_MOOD_FALLBACK_PERCENT=5
+```
+
+Window accepts 5, 6 or 7 trading-session returns. Multiplier accepts numbers from
+2 to 3, including 2.5. Fallback accepts >0 through 100 percent. Invalid settings
+stop Slack startup, not silently revert. No extra API requests or Slack scopes.
+
+The typical move is the arithmetic mean of the **absolute percentage**
+close-to-close moves over the preceding window, excluding the session being
+judged. Seven returns require eight preceding closes. It is not a signed mean,
+standard deviation, options-implied volatility or VIX. At or above 3x that mean,
+the sign chooses the label. A near-zero/flat baseline or fewer than the required
+returns uses the explicit 5% fixed fallback, in either direction. Every card shows
+the move, threshold and basis, even when no label triggers.
+
+Finnhub session return uses only Finnhub current price and its own `pc` previous
+close: `(price / previousClose - 1) * 100`. Alpha Vantage supplies only the baseline
+of daily returns, attributed separately with its last included date. No Finnhub
+price is appended to that chart or divided by an Alpha close. With no history
+configured or history unavailable, the fixed fallback can still work. Missing or
+invalid Finnhub previous close means "Mood unavailable", never a guessed return.
+Existing cached quotes without previous close gain it on normal cache expiry.
+
+Alpha-only mode evaluates the latest daily-close move, not an intraday move, and
+excludes that target return from its baseline. Stale/future quotes, malformed,
+future or more-than-four-day-old history suppress mood. US session identity uses
+America/New_York, not UTC midnight; Alpha-only uses its labeled trading date.
+The baseline uses provider observations, does not backfill missing exchange
+sessions, and does not promise a holiday calendar. Both daily data and previous
+close are unadjusted: splits and other corporate actions may create false mood
+labels. Not investment advice, a trading signal or a VIX implementation.
+
+Labels appear inside the card and fallback/notification text, not as emoji on
+someone else's message. DEMO fixtures do not trigger real-market moods. No
+background monitoring, deployment, real provider requests or Slack installation
+has been performed for this feature. Local card preview is synthetic, not a
+verified Slack-client layout.

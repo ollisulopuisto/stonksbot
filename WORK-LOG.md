@@ -21,3 +21,33 @@ inspected. Slack client layout, token connection, live provider and deployment
 not tested. Remaining limitation: successful card then failed PNG can duplicate
 card on retry, documented rather than hidden. Mood feature is a design note,
 not invented thresholds.
+
+
+## 2026-11-28, rolling mood follow-up
+
+Recovered owner's voice definition from the authenticated conversation. Checked
+main, branches and all recent PRs before work: provider PR2 already merged and
+no overlapping mood PR. Seven-session / 3x defaults follow the requested plan;
+5% fallback is explicit and reviewable, not presented as VIX. Branch from merged
+main, no deployment or merge.
+
+Added a pure mean-absolute-return evaluator, prior-session exclusion, configurable
+5..7 / 2..3x / fixed threshold, same-feed Finnhub previous close, and card labels
+through the real handler and Slack startup configuration. Daily-only mode judges
+the final daily close. Chart, provider quota/cache, retry and Slack scope behavior
+unchanged. Missing previous-close cache entries fail closed until cache expiry.
+
+Own adversarial review traced Finnhub response and cache -> history composition
+-> handler -> card summary/blocks -> Slack adapter, plus daily-only/fixture paths.
+Checked target-session exclusion near UTC midnight, same-feed denominator,
+absolute (not cancelling signed) average, flat/short/invalid baselines, zero and
+non-finite values, inclusive thresholds, stale/future inputs, metadata identity,
+config startup rejection, old cache compatibility and source labels. Fixed
+history timestamp/last-date mismatch and non-finite return guards during review.
+
+New tests first failed before implementation. Full npm test passes, npm audit
+reports no vulnerabilities and offline demo succeeds. Local synthetic card
+preview inspected separately, not a Slack-client verification. No real provider
+key/request, live Slack, deployment or exchange corporate-action/calendar tests.
+Unadjusted series may mislabel splits; provider observations are not independently
+checked against exchange-session calendars. These limits are in README and PR.

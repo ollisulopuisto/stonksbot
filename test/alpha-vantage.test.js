@@ -82,7 +82,7 @@ test('real handler can render provider result as PNG without live Slack or crede
 test('daily-close card flags old dates and never claims a current quote', async t => {
   const { provider } = await setup(t);
   const quote = await provider.lookup('AAPL');
-  assert.equal(buildCard(quote, now + 7 * 86400000).text, 'AAPL: 250.12 USD. DAILY CLOSE, not a live price; UTC timestamp denotes trading date only; OLD DATA: more than 4 days old. As of 2026-11-27T00:00:00Z.');
+  assert.equal(buildCard(quote, now + 7 * 86400000).text, 'AAPL: 250.12 USD. DAILY CLOSE, not a live price; UTC timestamp denotes trading date only; OLD DATA: more than 4 days old. As of 2026-11-27T00:00:00Z. Mood unavailable: No fresh session move.');
   assert.throws(() => new AlphaVantageProvider({ apiKey: 'x', stateDir: '/tmp/x', currencies: ['USD'] }));
 });
 

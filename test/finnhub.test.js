@@ -20,7 +20,7 @@ test('US quote uses header auth, restart cache and honest no-chart card',async t
  assert.equal(calls[0].options.redirect,'error');
  assert.deepEqual(await new FinnhubProvider(options).lookup('AAPL'),quote);assert.equal(calls.length,1);
  assert.doesNotMatch(await readFile(join(stateDir,'state.json'),'utf8'),/fake-test-key/);
- assert.equal(buildCard(quote,now).text,'AAPL: 250.12 USD. REAL-TIME US QUOTE, on demand; may be cached up to 15 seconds. As of 2026-11-28T07:59:57.000Z.');
+ assert.match(buildCard(quote,now).text,/AAPL: 250.12 USD.*As of 2026-11-28T07:59:57.000Z.*Mood unavailable/);
  const sent=[];await createHandler({provider,now:()=>now,send:async p=>sent.push(p)})({channel:'C123',ts:'123.4',text:'$AAPL'});
  assert.equal(sent.length,1);assert.equal(sent[0].png,null);assert.match(JSON.stringify(sent[0].card),/No history chart/);
  assert.match(buildCard(quote,now+3600000).text,/STALE, not a current quote/);
@@ -55,4 +55,14 @@ test('15-second cache expires and global 30-per-second cap blocks bursts',async 
  for(let i=0;i<30;i++)await burst.provider.lookup('S'+i);
  await assert.rejects(burst.provider.lookup('S30'),/quota/);
  assert.equal(burst.calls.length,30);
+});
+
+test('previous close is optional same-feed data, invalid values never become mood inputs',async t=>{
+ for(const pc of [100,undefined,0,-1,'100']) {
+  const {provider}=await setup(t,{fetchImpl:async()=>({ok:true,json:async()=>({c:106,pc,t:now/1000})})});
+  const quote=await provider.lookup('AAPL');
+  assert.equal(quote.previousClose,pc===100?100:undefined);
+  const text=buildCard(quote,now).text;
+  assert.match(text,pc===100?/We're back.*fixed 5% fallback/:/Mood unavailable/);
+ }
 });

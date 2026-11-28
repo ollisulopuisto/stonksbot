@@ -77,6 +77,7 @@ export class FinnhubProvider {
       // explicit operator allowlist defines US coverage; never infer a suffix.
       if (!Number.isFinite(body?.c) || body.c <= 0 || !Number.isInteger(body?.t) || body.t <= 0 || body.t * 1000 > now + 60000) throw fail();
       const quote = validateQuote({ symbol, name: symbol, price: body.c, currency: this.currencies[symbol],
+        ...(Number.isFinite(body.pc) && body.pc > 0 ? { previousClose: body.pc } : {}),
         asOf: new Date(body.t * 1000).toISOString(), source: 'Finnhub real-time US quote', fixture: false, priceKind: 'us-quote', history: [] });
       state.cache[symbol] = { fetchedAt: now, quote };
       await save();
