@@ -517,10 +517,12 @@ change venue. Future US listings can create new collisions: refresh and review
 before relying on bare symbols, or use explicit suffixes. No exhaustive OTC check.
 
 Table resolution is a startup-loaded Map, including table misses, no lookup API
-or repeated symbol search. Unknown/unavailable US results are negatively cached
-24h in private persistent bare-symbol-misses.json, including failures, so repeat
-unknown requests/restarts do not burn quota. A transient US failure can therefore
-suppress that bare symbol24h; explicit .US bypasses this negative cache. Never
+or repeated symbol search. Clean unsupported/null US results are negatively cached
+24h in private persistent bare-symbol-misses.json, so repeat unknown requests/restarts do not burn quota. Thrown network/quota errors
+are cooled down only15minutes, then retried on demand. Corrupt/future cache data
+is discarded/reset, never blocks all bare lookups. This is separate from provider
+quota state, which is never reset. A transient failure suppresses a bare symbol
+for at most15minutes; explicit .US bypasses this negative cache. Never
 change/delete provider quota state. One bot process per persistent state root.
 
 Optional STONKSBOT_HELSINKI_SYMBOLS_FILE=/private/path/helsinki-overrides.json:

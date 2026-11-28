@@ -289,3 +289,9 @@ card/upload/react and notice paths. Tested collision/explicit venue, source coun
 no resolution methods called, restart negative cache, add/replace/remove override
 and malformed config. Source stale/new OTC collisions remain a disclosed risk.
 No deploy/merge; this PR explicitly waits for owner's new yes despite older grant.
+
+Reviewer follow-up: transient thrown US errors no longer cached24h. Failing-first
+recovering-provider test, then15min cooldown for thrown failures vs24h clean null.
+Corrupt/future/old-schema miss entries discarded and persisted clean on next
+lookup, never touch provider quota state. Tests for corrupt/future JSON and
+recovery after15min pass. No merge, owner yes still required.

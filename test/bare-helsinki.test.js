@@ -51,3 +51,17 @@ test('real startup config loads table in mixed and Helsinki-only modes without n
  const p=await startupProvider(env);assert.equal(p.entries.size,174);p.helsinkiProvider.lookup=async s=>quote(s);assert.equal((await p.lookup('MEKKO')).symbol,'MEKKO.HE');assert.equal(await p.lookup('AAPL'),null);
  const mixed=await startupProvider({...env,STONKSBOT_PROVIDER:'finnhub',EODHD_ENABLED:'yes',FINNHUB_API_KEY:'synthetic',FINNHUB_PERSONAL_USE_CONFIRMED:'yes',STONKSBOT_HISTORY_PROVIDER:'alpha-vantage',ALPHAVANTAGE_API_KEY:'synthetic'});assert.equal(mixed.usProvider.constructor.name,'QuoteWithDailyHistory');assert.equal(mixed.entries.size,174);
 });
+test('transient US failure cools only15min, then recovers; clean null remains24h',async t=>{
+ const {mkdtemp,rm}=await import('node:fs/promises');const {tmpdir}=await import('node:os');const {join}=await import('node:path');const root=await mkdtemp(join(tmpdir(),'bare-recover-'));t.after(()=>rm(root,{recursive:true,force:true}));let now=Date.now(),calls=0;
+ const us={lookup:async()=>{if(++calls===1)throw Error('network');return quote('AAPL');}},path=join(root,'misses.json');
+ assert.equal(await new StaticHelsinkiRouter(us,{},new Map(),path,()=>now).lookup('AAPL'),null);now+=14*60000;
+ assert.equal(await new StaticHelsinkiRouter(us,{},new Map(),path,()=>now).lookup('AAPL'),null);assert.equal(calls,1);now+=60001;
+ assert.equal((await new StaticHelsinkiRouter(us,{},new Map(),path,()=>now).lookup('AAPL')).symbol,'AAPL');assert.equal(calls,2);
+});
+test('corrupt or future miss cache resets, never makes bare US lookups permanently fail',async t=>{
+ const {mkdtemp,writeFile,rm}=await import('node:fs/promises');const {tmpdir}=await import('node:os');const {join}=await import('node:path');const root=await mkdtemp(join(tmpdir(),'bare-corrupt-'));t.after(()=>rm(root,{recursive:true,force:true}));const path=join(root,'misses.json');const now=Date.now();
+ for(const value of ['bad json',JSON.stringify({AAPL:now+60000}),JSON.stringify({AAPL:{at:now+60000,ttl:86400000}}),'[]']){
+  await writeFile(path,value);let calls=0;const router=new StaticHelsinkiRouter({lookup:async()=>{calls++;return quote('AAPL');}},{},new Map(),path,()=>now);
+  assert.equal((await router.lookup('AAPL')).symbol,'AAPL');assert.equal(calls,1);
+ }
+});

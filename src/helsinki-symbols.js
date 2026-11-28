@@ -26,12 +26,15 @@ export class StaticHelsinkiRouter {
   if(!mapping){
    if(!this.usProvider)return null;
    let misses={};const now=this.now();
-   if(this.statePath){try{misses=JSON.parse(await readFile(this.statePath,'utf8'));}catch(e){if(e.code!=='ENOENT')throw Error('Invalid bare-symbol miss cache.');}}
-   if(!misses||typeof misses!=='object'||Array.isArray(misses)||Object.values(misses).some(t=>!Number.isFinite(t)||t>now))throw Error('Invalid bare-symbol miss cache.');
-   if(Object.hasOwn(misses,symbol)&&now-misses[symbol]<86400000)return null;
-   let result;try{result=await this.usProvider.lookup(symbol);}catch{result=null;}
-   if(!result&&this.statePath){
-    misses=Object.fromEntries(Object.entries(misses).filter(([,t])=>now-t<86400000));misses[symbol]=now;
+   if(this.statePath){try{misses=JSON.parse(await readFile(this.statePath,'utf8'));}catch{misses={};}}
+   // This cache is only a convenience, never provider quota state. Discard
+   // corrupt/old-schema/future entries rather than making quotes unavailable.
+   if(!misses||typeof misses!=='object'||Array.isArray(misses))misses={};
+   misses=Object.fromEntries(Object.entries(misses).filter(([,v])=>v&&Number.isFinite(v.at)&&v.at<=now&&[900000,86400000].includes(v.ttl)&&now-v.at<v.ttl));
+   if(Object.hasOwn(misses,symbol))return null;
+   let result,ttl=86400000;try{result=await this.usProvider.lookup(symbol);}catch{result=null;ttl=900000;}
+   if(this.statePath){
+    if(!result)misses[symbol]={at:now,ttl};
     if(Object.keys(misses).length>500)delete misses[Object.keys(misses)[0]];
     await mkdir(dirname(this.statePath),{recursive:true,mode:0o700});await writeFile(this.statePath+'.tmp',JSON.stringify(misses),{mode:0o600});await rename(this.statePath+'.tmp',this.statePath);
    }
