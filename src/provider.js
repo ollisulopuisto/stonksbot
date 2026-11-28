@@ -1,3 +1,4 @@
+import {marketFor,eodhdSymbol} from './eodhd-symbols.js';
 import { readFile } from 'node:fs/promises';
 
 export class FixtureProvider {
@@ -16,7 +17,7 @@ export function validateQuote(quote) {
       typeof quote.source !== 'string' || !quote.source || typeof quote.name !== 'string' ||
       !Array.isArray(quote.history) || (['us-quote','delayed-quote'].includes(quote.priceKind) && quote.history.length === 0 ? false : quote.history.length < 2) || quote.history.length > 1000) throw new Error('Invalid provider result');
   if (['us-quote','delayed-quote'].includes(quote.priceKind) && quote.history.length && (quote.historyKind !== 'daily-close' || typeof quote.historySource !== 'string' || !quote.historySource || !Number.isFinite(Date.parse(quote.historyAsOf)))) throw new Error('Missing independent history attribution');
-  if (quote.priceKind === 'delayed-quote' && (quote.exchange !== 'XHEL' || quote.currency !== 'EUR' || !quote.symbol.endsWith('.HE'))) throw Error('Invalid delayed Helsinki identity');
+  if (quote.priceKind === 'delayed-quote' && (eodhdSymbol(quote.symbol)!==quote.symbol||!marketFor(quote.symbol)||quote.exchange!==marketFor(quote.symbol).mic||quote.currency!==marketFor(quote.symbol).currency)) throw Error('Invalid delayed Helsinki identity');
   let previous = -Infinity;
   for (const point of quote.history) {
     const date = Date.parse(point.date);
