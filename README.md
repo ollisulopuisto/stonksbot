@@ -245,3 +245,35 @@ someone else's message. DEMO fixtures do not trigger real-market moods. No
 background monitoring, deployment, real provider requests or Slack installation
 has been performed for this feature. Local card preview is synthetic, not a
 verified Slack-client layout.
+
+
+## Ask for the mood directly
+
+Ask `is $NVDA over or back?` for a direct mood answer at the top of the same
+price/source/history card. It uses exactly the normal mood settings, not a new
+predictor or extra API call. It answers the actual result, regardless of whether
+you asked about being back or over: "We're back", "It's over", "No mood trigger"
+or "Mood unavailable". The detailed formula/source text still follows. Finnish
+questions currently receive the same English meme labels, not a translated
+investment claim. "Pohjalla" is treated as a mood question, not a price-bottom
+forecast.
+
+Recognized forms (case-insensitive; optional punctuation; any valid cashtag):
+
+- `is $NVDA over or back`, `is $NVDA back or over`
+- `is $NVDA back`, `is $NVDA back yet`, `is $NVDA over`, `is $NVDA done`
+- `onko $NVDA over vai back`, `onko $NVDA back vai over`
+- `onko $NVDA over`, `onko $NVDA back`
+- `onko $NVDA takaisin`, `onko $NVDA palannut`, `joko $NVDA on takaisin`
+- `onko $NVDA pohjalla`, `onko $NVDA ohi`
+- `onko $NVDA nousussa`, `onko $NVDA laskussa`
+
+Finnish forms also accept optional `on` after the ticker. These are bounded
+patterns, not general language understanding. Bare ticker names without `$` are
+not commands. Code blocks, inline code, links and URLs are ignored as before.
+Other cashtags still get the regular price card, even in an unrecognized question.
+Up to three symbols per message, the same channel/ticker restrictions, source
+rights, provider quotas, freshness rules, threading and retry caveats apply.
+Unsupported/provider-rejected tickers still produce no card; there is no guessed
+market mood. DEMO cards answer unavailable, never a real-market mood. No live
+Slack installation or provider test was performed for this command.
