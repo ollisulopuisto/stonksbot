@@ -295,3 +295,43 @@ recovering-provider test, then15min cooldown for thrown failures vs24h clean nul
 Corrupt/future/old-schema miss entries discarded and persisted clean on next
 lookup, never touch provider quota state. Tests for corrupt/future JSON and
 recovery after15min pass. No merge, owner yes still required.
+
+## 2026-11-28, offline reverse company-name lookup
+
+Owner requested fuzzy name -> ticker via cashtags and app mention. Checked current
+main bde5b56/open PRs, no overlap. Official Nasdaq US directory snapshot2026-11-27
+21:34contains12762supported non-test symbols/names, extracted programmatically.
+Combined with dated174HE table/overrides, no runtime metadata calls for resolution.
+Exact tickers win, conservative threshold/top-two gap avoids close-match guessing,
+full matched name visible, suggestions have no quote/reaction. New tests failed
+without module first, now cover Apple/Marimekko, generic/tie/typo confidence, actual
+handler mention/cashtag, no unmentioned prose, bot messages and event dedup.
+
+Own adversarial review traced source index/normalization -> exact-ticker priority
+-> ranked candidates -> route/source name -> quote/card/mood/reaction. Explicit
+.US accepted by direct Finnhub/Alpha paths as well as Helsinki router. Only real
+app_mention event enables mention parsing, channel gate retained. No bare prose
+trigger, no bot/edit loop, one instrument+no suggestions required for reaction.
+No account/key/API quotes, Slack scope mutation/install or deployment.130tests,
+audit0/demo/diff pass, exact-head CI/reviewer required; NO MERGE until new user yes.
+
+Reviewer findings fixed with failing-first regression tests. Unknown/OTC/new
+cashtags preserve provider lookup; BRK-B -> BRK.B. Runtime name matching now
+requires whole normalized core equality, no prefix/fuzzy auto-quote. Mention
+ordinary words silent, exact-name ambiguity asks. Cashtag exact-name $apple still
+works; question flag follows mapped route. Snapshot redistribution terms explicitly
+unverified in README. Multiword multi-name requests out of scope.132tests pass.
+
+Owner requested fuzzy restored after strict-name review fix. Added failing-first
+brand/typo tests then conservative prefix/edit-distance with source security-type
+ranking, exact name boost, clear lead requirement and ordinary-word silence.
+Hand-curated Google/Alphabet Class A and Facebook aliases separately flagged,
+source links included. Google never DEPW, hello/ping never MOMO/PASW, OTC/new
+cashtags pass when low match. Appl deliberately asks due close alternatives.
+
+Third reviewer safety pass: failing-first common-word regression and full297word
+probe retained. Dictionary guard sourced/date recorded, ordinary mentions silent.
+Mentions alias/exact or6+edit1only; cashtag4+edit1or unique first-wholeword5+prefix,
+clear lead. Real ticker APLE/HELP priority confirmed by owner via parent, no Apple
+substitution. Reviewed must-quote brand set aliases added from bundled full names.
+138tests pass including297word probe both name modes and actual handler silence.

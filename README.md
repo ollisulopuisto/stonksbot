@@ -556,3 +556,69 @@ npm test
 Review diff/new/delisted symbols and overlap list, verify special suffixes with
 provider metadata, submit PR. Source NDA_FI normalizes to NDA-FI; full names are
 as supplied by the dataset, not typed from memory. No automatic network refresh.
+
+## Offline company-name lookup
+
+`how is $apple doing` resolves to Apple ($AAPL); `@stonksbot apple` also works
+when Slack delivers a real app_mention event. Ordinary untagged company names
+never trigger replies. The literal typed string @stonksbot isn't authenticated
+as a mention, Slack must send `<@BOT_ID>`. Existing channel allowlist, bot/edit
+suppression and10min message dedup apply, including duplicate message/app_mention
+events. Reactions only for one resolved instrument and no unresolved suggestions.
+
+US names are bundled from official Nasdaq nasdaqtraded.txt directory snapshot
+November27,2026 21:34, retrieved November28:12762non-test listings with supported
+US-style symbols. Helsinki uses the174entry CC0 September20,2025table and local
+overrides above. Index loaded at startup, no name API calls/quota for matching.
+Actual quote/name/history provider requests still use existing budgets. Names
+shown are source full names, e.g. Apple Inc. - Common Stock ($AAPL), not invented
+short labels. Exact ticker identities win before name search. Explicit .HE/.US
+routes bypass fuzzy matching; US-only providers accept the explicit .US route.
+
+Matching: normalize case/diacritics/punctuation and company suffixes for ranking,
+but display full source name. Exact ticker identity wins first. Reviewed brand
+aliases google/alphabet -> GOOGL Class A, facebook -> META are hand-curated, not
+provider data; use GOOG explicitly for Alphabet Class C. Exact core-name score1.2,
+prefix score0.75+0.2*(query/name length), otherwise Levenshtein similarity.
+Noncommon/ETF/warrant/preferred approximate matches lose0.12; exact names retain
+identity. Require score>=0.79 (4+chars) or0.95 (3chars), runner-up gap>=0.12. Close
+cashtag candidates show up to3suggestions; no plausible match passes original
+provider path (BRK-B -> BRK.B). $google cannot become an unrelated prefix ETF.
+Appl remains a suggestion because AppLovin/Applied are close. Marimeko typo can
+resolve Marimekko. Mention low confidence or ordinary help/test/thanks/status/
+hello/ping stays silent, no chatter. Mood-question flag follows mapped route.
+Name index misses don't prove a ticker absent, OTC/new-listing paths preserved.
+Single multiword company supported for mentions; multiword multi-name out of scope.
+
+Slack setup: add bot OAuth scope app_mentions:read and subscribe bot event
+app_mention, reinstall app after scopes change. Existing message.channels/groups
+subscriptions still handle cashtags, reactions:write for over/back, no new
+reaction subscription. App must see the allowed channel; no channel discovery.
+
+Refresh US index offline after reviewing a new official directory download:
+https://www.nasdaqtrader.com/dynamic/SymDir/nasdaqtraded.txt
+
+```text
+python3 scripts/refresh-us-names.py --input /path/nasdaqtraded.txt --source-date YYYY-MM-DD --retrieved YYYY-MM-DD
+npm test
+```
+
+Review diff/date/count, rebuild Helsinki collision snapshot if relevant, submit
+PR. US data bundled as factual instrument identifiers/names, not price data.
+No real API keys, live provider quote, Slack app event/install or deploy tested.
+
+The Nasdaq snapshot's redistribution terms have not been verified. It is a factual
+identifier/name list, not price data, but that alone does not settle licensing;
+review those terms before distributing the bundled snapshot more widely.
+
+Fuzzy safety update: mentions accept only reviewed aliases/exact core names or a
+unique edit-distance1typo of6+characters. Cashtags also allow4+character typos or
+a unique first-whole-word prefix of5+characters, always clear lead>=0.12. No ETF,
+warrant or preferred approximate autoquotes. A bundled10kEnglish word guard from
+https://www.mit.edu/~ecprice/wordlist.10000 (retrieved2026-11-28, redistribution
+terms unverified) plus the reviewed297word probe blocks ordinary words, except
+explicit reviewed brands. Short brand aliases (Google, Meta, Amazon, Coinbase,
+Ford, Visa, Nordea) are hand-curated and source-directory verified. APLE is a real
+ticker, not an Apple typo: exact cashtags retain priority, as do HELP/TEST/etc.
+Mention ordinary words never inherit ticker priority. Dictionary/name policy is
+conservative: some real names such as news/invesco require explicit ticker.

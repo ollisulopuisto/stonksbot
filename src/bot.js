@@ -1,3 +1,4 @@
+import { resolveName } from './name-lookup.js';
 import { helsinkiRegularSession } from './helsinki-session.js';
 import { chartPng } from './chart.js';
 import { questionSymbols } from './questions.js';
@@ -47,7 +48,7 @@ export function replyOptions(env = process.env) {
  if(!['channel','thread'].includes(replyMode)) throw Error('STONKSBOT_REPLY_MODE must be channel or thread.');
  return {replyMode};
 }
-export function createHandler({ provider, send, now = Date.now, onError = () => {}, mood = {}, replyMode = 'channel', react = async () => {}, reactionNames = {over:'over',back:'back'} }) {
+export function createHandler({ provider, send, now = Date.now, onError = () => {}, mood = {}, replyMode = 'channel', react = async () => {}, reactionNames = {over:'over',back:'back'}, nameIndex = null }) {
  replyOptions({STONKSBOT_REPLY_MODE:replyMode});
   const delivered = new Map();
   const reacted = new Map();
@@ -55,9 +56,30 @@ export function createHandler({ provider, send, now = Date.now, onError = () => 
   let active = 0;
   return async event => {
     if (!event || event.bot_id || event.subtype || !/^[A-Z0-9]+$/.test(event.channel ?? '') || !/^\d+\.\d+$/.test(event.ts ?? '')) return;
-    const symbols = extractTickers(event.text);
+    let symbols = extractTickers(event.text);
     const questions = new Set(moodQuestionTickers(event.text));
-    if (!symbols.length) return;
+    const matchedNames=new Map();
+    const notices=[];
+    if(nameIndex){
+      const cashtag=!!symbols.length;
+      const queries=symbols.length?symbols:(event.type==='app_mention'&&/<@[A-Z0-9]+>/.test(event.text??'')?[plainMessage(event.text).trim()]:[]);
+      symbols=[];
+      for(const query of queries){
+        if(/\.(HE|US)$/.test(query)){symbols.push(query);continue;}
+        const resolved=resolveName(nameIndex,query,{strict:false,namesOnly:!cashtag,mode:cashtag?'cashtag':'mention'});
+        if(resolved.notice){
+          if(resolved.strong&&cashtag)notices.push(resolved.notice);
+          else if(cashtag)symbols.push(query.toUpperCase().replace(/-([AB])$/,'.$1'));
+          continue;
+        }
+        if(!resolved.route){if(cashtag)symbols.push(query.toUpperCase());continue;}
+        const route=resolved.route.replace(/-([AB])$/,'.$1');
+        if(questions.has(query))questions.add(route);
+        symbols.push(route);if(resolved.name)matchedNames.set(route,resolved.name);
+      }
+      symbols=[...new Set(symbols)].slice(0,3);
+    }
+    if (!symbols.length&&!notices.length) return;
     const key = `${event.channel}:${event.ts}`;
     const time = now();
     for(const [k,until] of reacted)if(until<=time)reacted.delete(k);
@@ -65,10 +87,12 @@ export function createHandler({ provider, send, now = Date.now, onError = () => 
     if (delivered.has(key) || inFlight.has(key) || active >= 4) return;
     inFlight.add(key); active++;
     try {
+      for(const text of notices){await send({channel:event.channel,...(replyMode==='thread'?{thread_ts:/^\d+\.\d+$/.test(event.thread_ts??'')?event.thread_ts:event.ts}:{}),card:{text,blocks:[{type:'section',text:{type:'plain_text',text}}]},png:null});}
       for (const symbol of symbols) {
         const symbolKey = `${key}:${symbol}`;
         if (delivered.has(symbolKey)) continue;
-        const quote = await provider.lookup(symbol);
+        let quote = await provider.lookup(symbol);
+        if(quote&&matchedNames.has(symbol))quote={...quote,name:matchedNames.get(symbol)};
         if (!quote) continue;
         if(quote.resolutionNotice){
           const text=quote.resolutionNotice;
@@ -79,7 +103,7 @@ export function createHandler({ provider, send, now = Date.now, onError = () => 
         const verdict=quote.fixture?null:evaluateMood(quote,now(),mood);
         const reaction=verdict?.label === "We're back" ? reactionNames.back : verdict?.label === "It's over" ? reactionNames.over : null;
         const reactionKey=`${key}:${reaction}`;
-        if(symbols.length === 1 && reaction && !reacted.has(reactionKey)) {
+        if(symbols.length === 1 && notices.length === 0 && reaction && !reacted.has(reactionKey)) {
           try { await react({channel:event.channel,timestamp:event.ts,name:reaction});reacted.set(reactionKey,now()+10*60_000);if(reacted.size>500)reacted.delete(reacted.keys().next().value); }
           catch { onError(Error('Slack reaction failed; card posting continues.')); }
         }
