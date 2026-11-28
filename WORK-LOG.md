@@ -113,3 +113,18 @@ cap. Own review traced sentence boundaries, class-share dots, punctuation, regex
 anchors/length, sanitizer, per-symbol matching and unchanged evaluator/provider/
 channel/card paths. No formula/layout/dependency/scope changes. Full tests, audit,
 demo and diff checks pass. No live market/Slack, deploy or merge performed.
+
+
+### Public-channel startup join
+
+Owner asked to join public channels and respond there. Added one startup join
+attempt per configured C-prefixed channel via conversations.join; no discovery
+or joining unlisted channels. channels:join scope and app reinstall are documented.
+Already-member succeeds, join failure retains other channels/event handling and
+logs only configured IDs plus guidance, never raw Slack data. Private channels
+need invitation, including C-prefixed private channels in newer workspaces.
+No emoji reactions or channel-allowlist change. Tests first failed before helper
+existed, then exercise success/already-member, exception/ok:false, skipped private/
+DM IDs, allowed public response and excluded-channel gate through actual handler.
+Own review traced startup order, failure isolation, scope setup and source-data
+visibility limits. No deployment or real Slack scope/join operation performed.

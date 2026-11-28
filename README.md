@@ -29,7 +29,9 @@ live posting are separate steps, not performed by this PR. Use a bot app with
 Socket Mode and a connections:write app token. Bot scopes: chat:write,
 files:write and channels:history; add groups:history only if private channels
 are intended. Subscribe to message.channels, and message.groups only as needed.
-Invite it only to intended channels.
+Join only intended channels. At startup the bot attempts conversations.join for
+configured C-prefixed channel IDs, using the channels:join bot scope. It does not
+discover or join other channels. Private channels still require an invitation.
 
 Both public and private channels are supported. Set SLACK_BOT_TOKEN,
 SLACK_APP_TOKEN and an explicit comma-separated
@@ -100,7 +102,12 @@ Delete stored data if your data subscription ends, as Finnhub's terms require.
    `connections:write`. Bot scopes: `chat:write` and `groups:history` for a private
    channel, plus `files:write` for the Alpha Vantage chart uploads configured below.
    Subscribe to `message.groups`, install/reinstall, invite bot to the channel.
-   Public channels are supported too: use `channels:history` / `message.channels` instead, but do not
+   Public channels are supported too: add `channels:join`, use
+   `channels:history` / `message.channels`, reinstall the app after scope changes,
+   and set their IDs in SLACK_CHANNEL_IDS. Startup joins those public channels
+   automatically; an existing membership is harmless. Join failure logs only
+   the channel ID and setup guidance, continues other joins and event handling,
+   and does not retry. You can invite the bot manually instead. Do not
    enable shared Finnhub posting without written approval.
 2. Get your own Finnhub free API key. Official pricing lists 60 API calls/minute;
    docs add a 30 calls/second cap. `/quote` supports real-time US stocks. This bot
@@ -192,8 +199,9 @@ series for the same personal viewer does not waive either provider's conditions.
 A public channel is supported if the workspace/channel remains visible only
 to you. Public versus private is a Slack setting, not permission to share data.
 Keep channels:history and message.channels enabled for public channel messages,
-groups:history and message.groups for private ones, and invite the bot to each
-SLACK_CHANNEL_IDS channel. There is no private-only filter in code. No channel
+groups:history and message.groups for private ones, and configure each public channel ID in SLACK_CHANNEL_IDS. Add channels:join
+and reinstall for automatic startup join, or invite manually. Private channels
+still need a manual invitation. There is no private-only filter in code. No channel
 shared with other people and no Peliteoria use. US symbols only; Nasdaq Helsinki
 coverage is not verified and US ADRs must not be treated as Helsinki listings.
 
@@ -303,3 +311,12 @@ rights, provider quotas, freshness rules, threading and retry caveats apply.
 Unsupported/provider-rejected tickers still produce no card; there is no guessed
 market mood. DEMO cards answer unavailable, never a real-market mood. No live
 Slack installation or provider test was performed for this command.
+
+
+Public-channel startup join uses Slack conversations.join:
+https://docs.slack.dev/reference/methods/conversations.join/ . It requires the
+channels:join bot scope. Public channel IDs normally start with C; some private
+channels do too, so an automatic join may fail and they still need invitation.
+The configured channel gate remains mandatory. Responding means posting the
+existing ticker/mood card, not emoji reactions, and Finnhub visibility must
+remain limited to the owner. No live Slack join or scope installation verified.

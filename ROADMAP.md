@@ -11,3 +11,6 @@
   No background alerts or message emoji reactions. PR awaiting owner merge go.
 - Add live Slack UI verification, exchange/timezone-aware stale rules, delivery
   retry state and persistence before claiming production readiness.
+
+- Future idea from owner: express a mood answer as a Slack emoji reaction.
+  Roadmap only, no implementation or reactions:write scope added.

@@ -8,3 +8,19 @@ export function channelHandler(channels, handler) {
   // Public visibility does not bypass the explicitly configured channel list.
   return async ({ message }) => { if (channels.has(message?.channel)) await handler(message); };
 }
+
+export async function joinAllowedPublicChannels(client, channels) {
+  const failed = [];
+  // Private channels require an invitation. Never discover or join other IDs.
+  // C IDs may also be private in newer workspaces; Slack will refuse the join.
+  for (const channel of channels) {
+    if (!channel.startsWith('C')) continue;
+    try {
+      const response = await client.conversations.join({ channel });
+      if (!response?.ok) failed.push(channel);
+    } catch {
+      failed.push(channel); // Do not log tokens, raw Slack errors or payloads.
+    }
+  }
+  return failed;
+}
