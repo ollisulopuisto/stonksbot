@@ -238,3 +238,7 @@ card posting and dedup. Success dedup retained separately so card retry cannot
 re-add reaction, each name once/message across symbols. Scope reactions:write
 and existing message events documented; no reaction event subscription needed.
 No live account/key/provider/Slack, permissions changes, deployment or merge.
+
+Independent review found multi-ticker opposite moods ambiguous at message level.
+Failing-first opposite-outcome two-ticker test, then limited reactions to exactly
+one distinct extracted ticker; cards still post for all accepted symbols.

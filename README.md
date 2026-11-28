@@ -462,8 +462,8 @@ SLACK_CHANNEL_IDS. No reaction_added subscription or reactions:read required.
 
 Reaction targets the ORIGINAL ticker message, not its thread root or the bot's
 reply. Card posting and reactions fail independently. Both reuse the same quote
-and mood evaluation, no extra provider call. Multiple symbols can add both emoji
-when verdicts differ, with at most one of each name per message. Slack
+and mood evaluation, no extra provider call. Messages with multiple distinct tickers receive no reaction because a message-level
+emoji cannot identify which instrument it describes; all cards still post. Slack
 already_reacted counts as success. Missing/custom emoji or scope failure emits
 only safe setup guidance, card still posts, no automatic retry. Reaction success
 survives card retry in memory10min, not restart; Slack prevents duplicate bot

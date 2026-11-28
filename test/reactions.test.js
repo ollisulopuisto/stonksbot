@@ -25,3 +25,8 @@ test('Slack reaction exact args, already_reacted harmless; missing emoji stays a
  assert.deepEqual(reactionOptions({}),{reactionNames:{over:'over',back:'back'}});
  assert.throws(()=>reactionOptions({STONKSBOT_REACTION_OVER:'bad name'}));
 });
+test('opposite multi-ticker verdicts post cards but never ambiguous message reactions',async()=>{
+ const reactions=[],posts=[];
+ await createHandler({provider:{lookup:async symbol=>({...base,symbol,price:symbol==='AAPL'?106:94})},now:()=>now,react:async p=>reactions.push(p),send:async p=>posts.push(p)})({channel:'C1',ts:'123.4',text:'$AAPL $MSFT'});
+ assert.equal(posts.length,2);assert.deepEqual(reactions,[]);
+});

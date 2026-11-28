@@ -74,7 +74,7 @@ export function createHandler({ provider, send, now = Date.now, onError = () => 
         const verdict=quote.fixture?null:evaluateMood(quote,now(),mood);
         const reaction=verdict?.label === "We're back" ? reactionNames.back : verdict?.label === "It's over" ? reactionNames.over : null;
         const reactionKey=`${key}:${reaction}`;
-        if(reaction && !reacted.has(reactionKey)) {
+        if(symbols.length === 1 && reaction && !reacted.has(reactionKey)) {
           try { await react({channel:event.channel,timestamp:event.ts,name:reaction});reacted.set(reactionKey,now()+10*60_000);if(reacted.size>500)reacted.delete(reacted.keys().next().value); }
           catch { onError(Error('Slack reaction failed; card posting continues.')); }
         }
