@@ -673,6 +673,26 @@ PNG Description metadata retains all previous labels including5scale ticks;
 the visible minimalist card uses3ticks. Fixed640x320logical artboard rescales
 for optional custom dimensions, which may be too small to read comfortably.
 
+### Price-detail axis update
+
+The period high is the exact ceiling, period low sets the floor with a5%range
+bottom gutter. Flat/zero data gets a small symmetric finite span instead.
+Round1/2/5helper ticks are placed inside those bounds, never used to expand
+the ceiling/floor. Linear prices retain all extremes, including splits/outliers;
+no clipping/log transform. A non-zero baseline is visible in tick labels.
+Gridlines run across the plot to the right-hand value labels at stronger contrast.
+Line only, no area fill. Only last point is marked/labelled, with nearby tick
+labels suppressed. Exact high/low stay in the header; source/range appears once
+in the footer. Normal values use2decimals, sub-cent values retain useful digits.
+The renderer keeps a fixed640x320logical artboard, so custom tiny output can be
+unreadable. Tick count targets four intervals (typically3-6labels).
+
+Calendar axis: xpositions use actual UTC dates (Friday-to-Monday has a3daygap),
+not trading-session index.30dticks are Mondays,7dticks weekdays,3m/1yticks month
+starts, year beneath January. Stronger horizontal and slightly lighter vertical
+guides are behind the line. Footer states actual coverage, including partial data.
+No invented weekend points, straight connections only. Date-axis loop bounded
+at1001calendar days, input dates must increase. Custom tiny output remains caveat.
 ### Xetra cashtags
 
 Case-insensitive `$eunl`, `$EUNL`, `$eunl.de`, `$EUNL.DE`, `$bmw.de`, `$BMW.DE`

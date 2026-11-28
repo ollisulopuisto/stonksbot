@@ -95,17 +95,17 @@ test('flat history uses the same padded scale for labels and plot', () => {
   const points = [{ date:'2026-01-01', close }, { date:'2026-01-02', close }];
   const scale = chartScale(points), labels = chartLabels(points, {currency:'EUR'});
   assert.ok(scale.maximum > scale.minimum);
-  assert.ok(scale.minimum >= 0);
+  assert.ok(scale.minimum < close);
   assert.ok(scale.minimum <= close && close <= scale.maximum);
-  assert.deepEqual(labels.slice(2,7), scale.ticks.map(value => `${value.toFixed(2)} EUR`));
-  assert.equal(new Set(labels.slice(2,7)).size, 5);
+  assert.deepEqual(labels.slice(2,2+scale.ticks.length), scale.ticks.map(value => `${scale.formatTick(value)} EUR`));
+  assert.equal(new Set(labels.slice(2,2+scale.ticks.length)).size, scale.ticks.length);
   assert.ok(labels.includes(`LAST CLOSE ${close.toFixed(2)} EUR`));
   const png = chartPng(points,640,320,{currency:'EUR'});
   for(const label of labels.slice(2,7))assert.ok(png.includes(Buffer.from(label)));
   let at=8,compressed;
   while(at<png.length){const size=png.readUInt32BE(at),type=png.toString('ascii',at+4,at+8);if(type==='IDAT')compressed=png.subarray(at+8,at+8+size);at+=size+12;}
   const pixels=inflateSync(compressed);
-  const y=Math.round(250-(close-scale.minimum)/(scale.maximum-scale.minimum)*134);
+  const y=Math.round(250-(close-scale.minimum)/(scale.maximum-scale.minimum)*144);
   const index=y*(640*3+1)+1+350*3;
   assert.deepEqual([...pixels.subarray(index,index+3)],[78,215,249]);
  }
