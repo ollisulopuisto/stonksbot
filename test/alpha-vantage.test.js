@@ -24,7 +24,7 @@ test('one daily request becomes a labeled close and ascending chart; cached acro
   assert.equal(calls.length, 1); assert.equal(calls[0].url.hostname, 'www.alphavantage.co');
   assert.equal(calls[0].url.searchParams.get('function'), 'TIME_SERIES_DAILY');
   assert.equal(calls[0].options.redirect, 'error');
-  assert.match(buildCard(a, now).text, /DAILY CLOSE, not a live price/);
+  assert.match(buildCard(a, now).text, /daily close age/);
   assert.doesNotMatch(buildCard(a, now).text, /DEMO/);
   assert.deepEqual(await new AlphaVantageProvider(options).lookup('AAPL'), a);
   assert.equal(calls.length, 1);
@@ -77,12 +77,12 @@ test('configuration is fixture-default, explicit live selector never silently fa
 test('real handler can render provider result as PNG without live Slack or credentials', async t => {
   const { provider } = await setup(t); const sent = [];
   await createHandler({ provider, now: () => now, send: async p => sent.push(p) })({ channel: 'C123', ts: '123.4', text: '$AAPL' });
-  assert.equal(sent.length, 1); assert.match(sent[0].card.text, /DAILY CLOSE/); assert.ok(sent[0].png.length > 1000);
+  assert.equal(sent.length, 1); assert.match(sent[0].card.text, /daily close age/); assert.ok(sent[0].png.length > 1000);
 });
 test('daily-close card flags old dates and never claims a current quote', async t => {
   const { provider } = await setup(t);
   const quote = await provider.lookup('AAPL');
-  assert.equal(buildCard(quote, now + 7 * 86400000).text, 'AAPL: 250.12 USD. DAILY CLOSE, not a live price; UTC timestamp denotes trading date only; OLD DATA: more than 5 calendar days old. As of 2026-11-27T00:00:00Z. Mood unavailable: No fresh session move.');
+  assert.equal(buildCard(quote, now + 7 * 86400000).text, 'AAPL: 250.12 USD. daily close age 8 d ago · STALE');
   assert.throws(() => new AlphaVantageProvider({ apiKey: 'x', stateDir: '/tmp/x', currencies: ['USD'] }));
 });
 

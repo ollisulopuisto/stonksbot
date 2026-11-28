@@ -6,7 +6,7 @@ import { tickerCurrency, validCurrencies } from './tickers.js';
 const MINUTE = 60000;
 const fail = () => new Error('Finnhub unavailable or invalid data; no raw response logged.');
 export class FinnhubProvider {
-  constructor({ apiKey, currencies, stateDir, minuteLimit = 60, cacheMs = 15000, fetchImpl = fetch, now = Date.now }) {
+  constructor({ apiKey, currencies, stateDir, minuteLimit = 60, cacheMs = 15000, fetchImpl = fetch, now = Date.now, resolveNames = false }) {
     if (typeof apiKey !== 'string' || !apiKey || typeof stateDir !== 'string' || !stateDir ||
         !validCurrencies(currencies, true) ||
         !Number.isInteger(minuteLimit) || minuteLimit < 1 || minuteLimit > 60 ||
@@ -14,6 +14,7 @@ export class FinnhubProvider {
       throw Error('Set Finnhub key, private persistent state directory and optional symbol currencies; default US/USD; limit 1..60.');
     }
     Object.assign(this, { apiKey, currencies: currencies === undefined ? undefined : { ...currencies }, stateDir: resolve(stateDir), minuteLimit, cacheMs, fetchImpl, now });
+    this.resolveNames=resolveNames;
     this.queue = Promise.resolve();
   }
   lookup(symbol) {
@@ -76,7 +77,26 @@ export class FinnhubProvider {
       // /quote contains no symbol/currency or free historical series. The
       // The selected market scope is US/USD; an optional map restricts it further.
       if (!Number.isFinite(body?.c) || body.c <= 0 || !Number.isInteger(body?.t) || body.t <= 0 || body.t * 1000 > now + 60000) throw fail();
-      const quote = validateQuote({ symbol, name: symbol, price: body.c, currency: tickerCurrency(this.currencies, symbol),
+      // Profile2 is a separate metered call, best-effort; never lose a quote.
+      // Opt-in avoids changing the quote-only quota for existing installations.
+      let name=symbol;
+      if (this.resolveNames) {
+        state.names ??= {};
+        if (!state.names || typeof state.names!=='object' || Array.isArray(state.names)) throw fail();
+        const entry=Object.hasOwn(state.names,symbol)&&state.names[symbol];
+        if (entry && Number.isFinite(entry.at) && entry.at<=now && now-entry.at<86400000 && typeof entry.name==='string') name=entry.name;
+        else if(state.calls.length<this.minuteLimit && state.calls.filter(t=>now-t<1000).length<30 && now>=state.blockedUntil) {
+          state.calls.push(now);await save();
+          try {
+            const profileUrl=new URL('https://finnhub.io/api/v1/stock/profile2');profileUrl.search=new URLSearchParams({symbol});
+            const response=await this.fetchImpl(profileUrl,{headers:{'X-Finnhub-Token':this.apiKey},signal:AbortSignal.timeout(15000),redirect:'error'});
+            if(response.status===429)state.blockedUntil=now+MINUTE;
+            if(response.ok){const profile=await response.json();if(profile?.ticker===symbol && typeof profile.name==='string' && profile.name.trim())name=profile.name.trim().slice(0,120);}
+          }catch{} // No raw errors, and ticker remains a valid fallback.
+          state.names[symbol]={at:now,name};await save();
+        }
+      }
+      const quote = validateQuote({ symbol, name, price: body.c, currency: tickerCurrency(this.currencies, symbol),
         ...(Number.isFinite(body.pc) && body.pc > 0 ? { previousClose: body.pc } : {}),
         asOf: new Date(body.t * 1000).toISOString(), source: 'Finnhub real-time US quote', fixture: false, priceKind: 'us-quote', history: [] });
       state.cache[symbol] = { fetchedAt: now, quote };

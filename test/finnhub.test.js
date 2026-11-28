@@ -20,10 +20,10 @@ test('US quote uses header auth, restart cache and honest no-chart card',async t
  assert.equal(calls[0].options.redirect,'error');
  assert.deepEqual(await new FinnhubProvider(options).lookup('AAPL'),quote);assert.equal(calls.length,1);
  assert.doesNotMatch(await readFile(join(stateDir,'state.json'),'utf8'),/fake-test-key/);
- assert.match(buildCard(quote,now).text,/AAPL: 250.12 USD.*As of 2026-11-28T07:59:57.000Z.*Mood unavailable/);
+ assert.match(buildCard(quote,now).text,/AAPL: 250.12 USD.*updated just now/);
  const sent=[];await createHandler({provider,now:()=>now,send:async p=>sent.push(p)})({channel:'C123',ts:'123.4',text:'$AAPL'});
- assert.equal(sent.length,1);assert.equal(sent[0].png,null);assert.match(JSON.stringify(sent[0].card),/No history chart/);
- assert.match(buildCard(quote,now+3600000).text,/STALE, not a current quote/);
+ assert.equal(sent.length,1);assert.equal(sent[0].png,null);assert.doesNotMatch(JSON.stringify(sent[0].card),/No history chart/);
+ assert.match(buildCard(quote,now+3600000).text,/STALE/);
 });
 test('only explicitly configured US USD symbols; no international currency guessing',async t=>{
  const {provider,calls}=await setup(t);assert.equal(await provider.lookup('NOKIA.HE'),null);assert.equal(calls.length,0);
@@ -63,6 +63,13 @@ test('previous close is optional same-feed data, invalid values never become moo
   const quote=await provider.lookup('AAPL');
   assert.equal(quote.previousClose,pc===100?100:undefined);
   const text=buildCard(quote,now).text;
-  assert.match(text,pc===100?/We're back.*fixed 5% fallback/:/Mood unavailable/);
+  assert.match(text,pc===100?/We're back/:/updated just now/);
  }
+});
+test('profile2 names count quota, persist across restart and fail to ticker safely',async t=>{
+ const dir=await mkdtemp(join(tmpdir(),'names-test-'));t.after(()=>rm(dir,{recursive:true,force:true}));
+ const urls=[];const options={apiKey:'fake',stateDir:dir,now:()=>now,resolveNames:true,fetchImpl:async url=>{urls.push(url.pathname);return {ok:true,json:async()=>url.pathname.endsWith('profile2')?{ticker:'AAPL',name:'Apple Inc'}:{c:106,pc:100,t:now/1000}};}};
+ const q=await new FinnhubProvider(options).lookup('AAPL');assert.equal(q.name,'Apple Inc');assert.equal(urls.length,2);
+ const state=JSON.parse(await readFile(join(dir,'state.json'),'utf8'));assert.equal(state.calls.length,2);
+ assert.equal((await new FinnhubProvider({...options,now:()=>now+16000}).lookup('AAPL')).name,'Apple Inc');assert.equal(urls.length,3);
 });

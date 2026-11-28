@@ -2,7 +2,7 @@ import { helsinkiRegularSession } from './helsinki-session.js';
 import { chartPng } from './chart.js';
 import { questionSymbols } from './questions.js';
 import { validateQuote } from './provider.js';
-import { evaluateMood, moodText, oldDailyDate } from './mood.js';
+import { evaluateMood, oldDailyDate } from './mood.js';
 
 const plainMessage = text => text.replace(/```[\s\S]*?```|`[^`]*`|<[^>]*>|https?:\/\/\S+/g, ' ');
 export function extractTickers(text = '') {
@@ -16,27 +16,30 @@ export function moodQuestionTickers(text = '') {
   const questions = questionSymbols(plain);
   return extractTickers(text).filter(symbol => questions.has(symbol));
 }
-const safe = text => String(text).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]).slice(0, 200);
+export function relativeAge(asOf, now) {
+  const age=now-Date.parse(asOf);
+  if(age < -60000)return 'INVALID TIME';
+  const minutes=Math.floor(Math.max(0,age)/60000);
+  if(minutes<1)return 'updated just now';
+  if(minutes<60)return `updated ${minutes} min ago`;
+  if(minutes<1440)return `updated ${Math.floor(minutes/60)} h ago`;
+  return `updated ${Math.floor(minutes/1440)} d ago`;
+}
 export function buildCard(quote, now = Date.now(), mood = {}, question = false) {
   validateQuote(quote);
-  const age = now - Date.parse(quote.asOf);
-  const status = quote.priceKind === 'delayed-quote' && age > 3 * 86400000 ? 'OLD DATA, last delayed quote more than 3 days old' : quote.fixture ? 'DEMO FIXTURE, not a live price' : quote.priceKind === 'daily-close' ? `DAILY CLOSE, not a live price; UTC timestamp denotes trading date only${oldDailyDate(quote.asOf, now) ? '; OLD DATA: more than 5 calendar days old' : ''}` : age < -60_000 ? 'INVALID FUTURE TIMESTAMP, not a current quote' : age > (quote.priceKind === 'delayed-quote' ? 65 : 15) * 60_000 && (quote.priceKind !== 'delayed-quote' || helsinkiRegularSession(now)) ? 'STALE, not a current quote' : quote.priceKind === 'delayed-quote' ? `${helsinkiRegularSession(now) ? 'DELAYED HELSINKI QUOTE' : 'OUTSIDE REGULAR HELSINKI HOURS, last delayed quote'}, indicative not execution-grade; provider typically 15-20 min delayed, bot cached up to 60 min during regular hours` : quote.priceKind === 'us-quote' ? 'REAL-TIME US QUOTE, on demand; may be cached up to 15 seconds' : 'Provider quote, may be delayed';
-  const result = quote.fixture ? { label: null, basis: 'unavailable', reason: 'DEMO fixture, not a real-market mood' } : evaluateMood(quote, now, mood);
-  const moodSummary = quote.fixture ? null : moodText(result);
-  const answer = question ? `${quote.symbol}: ${result.label ?? (result.basis === 'unavailable' ? 'Mood unavailable' : 'No mood trigger')}.` : null;
-  const prices = quote.history.map(p => p.close);
-  const summary = `${quote.symbol}: ${quote.price.toFixed(2)} ${quote.currency}. ${status}. As of ${quote.asOf}.${moodSummary ? ` ${moodSummary}` : ''}`;
-  return {
-    text: answer ? `${answer} ${summary}` : summary,
-    blocks: [
-      { type: 'header', text: { type: 'plain_text', text: `${quote.symbol} · ${quote.name}`.slice(0, 150), emoji: false } },
-      ...(answer ? [{ type: 'section', text: { type: 'plain_text', text: answer, emoji: false } }] : []),
-      { type: 'section', text: { type: 'plain_text', text: `${quote.price.toFixed(2)} ${quote.currency}\n${status}`, emoji: false } },
-      { type: 'context', elements: [{ type: 'mrkdwn', text: `Source: ${safe(quote.source)} | As of ${safe(quote.asOf)}` }] },
-      ...(moodSummary ? [{ type: 'context', elements: [{ type: 'plain_text', text: moodSummary }] }] : []),
-      ...(quote.history.length ? [{ type: 'section', text: { type: 'plain_text', text: `${quote.historyKind === 'daily-close' ? 'DAILY CLOSE HISTORY (not live/intraday) | Source: ' + quote.historySource + (oldDailyDate(quote.historyAsOf, now) ? ' | OLD HISTORY: more than 5 calendar days old' : '') + '\n' : ''}History: ${quote.history[0].date} to ${quote.history.at(-1).date}\nClose range: ${Math.min(...prices).toFixed(2)}–${Math.max(...prices).toFixed(2)} ${quote.currency}. Line chart, equally spaced observations, vertical range shown here.`, emoji: false } }] : [{ type: 'context', elements: [{ type: 'plain_text', text: quote.historyNotice || 'No history chart: Finnhub free quotes do not include historical candles.' }] }]),
-    ],
-  };
+  const age=now-Date.parse(quote.asOf), daily=quote.priceKind==='daily-close';
+  const delayed=quote.priceKind==='delayed-quote';
+  const old=delayed&&age>3*86400000;
+  const stale=daily?oldDailyDate(quote.asOf,now):age>(delayed?65:15)*60000&&(!delayed||helsinkiRegularSession(now));
+  const status=quote.fixture?'DEMO':age < -60000?'INVALID TIME':old?'OLD DATA':stale?'STALE':delayed?(helsinkiRegularSession(now)?'delayed':'outside regular hours, delayed'):null;
+  const ageText=daily?relativeAge(quote.asOf,now).replace('updated','daily close age'):relativeAge(quote.asOf,now);
+  const result=quote.fixture?null:evaluateMood(quote,now,mood);
+  // Unknown mood is silence, not a warning or a fabricated answer.
+  const answer=result?.basis!=='unavailable'?(result?.label || (question?'no trigger':null)):null;
+  const label=quote.name && quote.name !== quote.symbol ? `${quote.name.replace(/[\p{Cc}\p{Cf}]/gu,' ').replace(/\s+/g,' ').trim().slice(0,120)} ($${quote.symbol})` : quote.symbol;
+  const text=`${label}: ${quote.price.toFixed(2)} ${quote.currency}. ${ageText}${status?` · ${status}`:''}${answer?` · ${answer}`:''}`;
+  const fallback=text.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'})[c]);
+  return {text:fallback,blocks:[{type:'section',text:{type:'plain_text',text,emoji:false}}]};
 }
 
 export function replyOptions(env = process.env) {
@@ -66,7 +69,7 @@ export function createHandler({ provider, send, now = Date.now, onError = () => 
         const quote = await provider.lookup(symbol);
         if (!quote) continue;
         const card = buildCard(quote, now(), mood, questions.has(symbol));
-        await send({ channel: event.channel, ...(replyMode === 'thread' ? { thread_ts: /^\d+\.\d+$/.test(event.thread_ts ?? '') ? event.thread_ts : event.ts } : {}), symbol, card, chartTitle: quote.historyKind === 'daily-close' ? `${symbol} ${quote.priceKind === 'delayed-quote' ? 'EODHD' : 'Alpha Vantage'} daily closes, not live` : quote.fixture ? `${symbol} DEMO fixture history` : `${symbol} daily close history`, png: quote.history.length >= 2 ? chartPng(quote.history,640,320,{ ...quote, historyKind: quote.historyKind }) : null });
+        await send({ channel: event.channel, ...(replyMode === 'thread' ? { thread_ts: /^\d+\.\d+$/.test(event.thread_ts ?? '') ? event.thread_ts : event.ts } : {}), symbol, card, chartTitle: quote.historyKind === 'daily-close' ? `${symbol} ${quote.priceKind === 'delayed-quote' ? 'EODHD' : 'Alpha Vantage'} daily closes, not live${quote.priceKind === 'us-quote' ? '; quote: Finnhub' : ''}` : quote.fixture ? `${symbol} DEMO fixture history` : `${symbol} daily close history`, png: quote.history.length >= 2 ? chartPng(quote.history,640,320,{ ...quote, historyKind: quote.historyKind }) : null });
         delivered.set(symbolKey, now() + 10 * 60_000);
       }
       delivered.set(key, now() + 10 * 60_000);

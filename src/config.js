@@ -17,7 +17,7 @@ function baseProvider(env) {
     catch { throw Error('Set FINNHUB_US_SYMBOL_CURRENCIES to explicitly verified US symbols mapped to USD.'); }
     if (!env.STONKSBOT_STATE_DIR) throw Error('Set a private persistent STONKSBOT_STATE_DIR.');
     const quote = new FinnhubProvider({ apiKey: env.FINNHUB_API_KEY, currencies, stateDir: join(env.STONKSBOT_STATE_DIR, 'finnhub'),
-      minuteLimit: Number(env.FINNHUB_MINUTE_LIMIT ?? 60) });
+      resolveNames: env.FINNHUB_RESOLVE_NAMES !== 'no', minuteLimit: Number(env.FINNHUB_MINUTE_LIMIT ?? 60) });
     if (!env.STONKSBOT_HISTORY_PROVIDER) return quote;
     if (env.STONKSBOT_HISTORY_PROVIDER !== 'alpha-vantage') throw Error('Unknown history provider. Choose alpha-vantage or leave unset.');
     return new QuoteWithDailyHistory(quote, new AlphaVantageProvider({ apiKey: env.ALPHAVANTAGE_API_KEY, currencies,

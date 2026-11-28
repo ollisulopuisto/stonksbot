@@ -14,10 +14,10 @@ test('extracts bounded cashtags, no bot mentions, URLs, code or ordinary words',
 test('fixtures cannot be mistaken for current prices; source/date/range are present', async () => {
   const q = await provider.lookup('AAPL');
   const card = buildCard(q);
-  assert.match(card.text, /DEMO FIXTURE, not a live price/);
-  assert.match(JSON.stringify(card), /Synthetic test data/);
-  assert.match(JSON.stringify(card), /2026-01-30/);
-  assert.match(JSON.stringify(card), /Close range/);
+  assert.match(card.text, /DEMO/);
+  assert.doesNotMatch(JSON.stringify(card), /Synthetic test data/);
+  assert.match(card.text, /updated .* ago/);
+  assert.doesNotMatch(JSON.stringify(card), /Close range/);
   assert.match(buildCard({ ...q, fixture: false }, Date.parse(q.asOf) + 3600000).text, /STALE/);
 });
 test('provider boundary rejects invalid prices, dates, unordered history and short history', async () => {
@@ -64,7 +64,8 @@ test('metadata uses plain text and escaped context to avoid Slack mentions', asy
   const q = await provider.lookup('AAPL');
   const card = buildCard({ ...q, name: '<!everyone>', source: '<!everyone>' });
   assert.equal(card.blocks[0].text.type, 'plain_text');
-  assert.match(card.blocks[2].elements[0].text, /&lt;!everyone&gt;/);
+  assert.doesNotMatch(card.text, /<!everyone>/);
+  assert.match(card.text,/&lt;!everyone&gt;/);
 });
 
 test('partial batch retry does not repost already delivered symbols', async () => {

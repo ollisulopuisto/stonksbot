@@ -34,9 +34,11 @@ test('actual handler answers all four outcomes, not the outcome suggested by the
   const receive=channelHandler(allowedChannels('C123'),createHandler({provider:{lookup:async s=>s==='NVDA'?{...base,...change}:null},send:async p=>sent.push(p),now:()=>now}));
   await receive({message:{channel:'C123',ts:'123.4',thread_ts:'122.3',text:'is $NVDA over or back?'}});
   assert.equal(sent.length,1);assert.equal(Object.hasOwn(sent[0],'thread_ts'),false);
-  assert.ok(sent[0].card.text.startsWith(`NVDA: ${label}`));
-  assert.equal(sent[0].card.blocks[1].text.text,`NVDA: ${label}.`);
-  assert.match(JSON.stringify(sent[0].card),/Finnhub/);
+  assert.match(sent[0].card.text,/Nvidia \(\$NVDA\): (106|94|101)\.00 USD/);
+  if (["We're back","It's over"].includes(label)) assert.ok(sent[0].card.text.includes(label));
+  else assert.doesNotMatch(sent[0].card.text,/Mood unavailable/);
+  assert.equal(sent[0].card.blocks.length,1);
+  assert.doesNotMatch(JSON.stringify(sent[0].card),/Finnhub/);
   await receive({message:{channel:'COTHER',ts:'123.5',text:'is $NVDA back?'}});
   await receive({message:{channel:'C123',ts:'123.6',text:'is $OTHER back?'}});
   assert.equal(sent.length,1);
@@ -45,11 +47,11 @@ test('actual handler answers all four outcomes, not the outcome suggested by the
 test('ordinary ticker cards stay unchanged, questions only affect matching symbol, demo is never a real mood',async()=>{
  const sent=[];
  await createHandler({provider:{lookup:async s=>({...base,symbol:s})},send:async p=>sent.push(p),now:()=>now})({channel:'C123',ts:'123.4',text:'is $NVDA back? $AAPL'});
- assert.ok(sent[0].card.text.startsWith("NVDA: We're back."));
- assert.ok(sent[1].card.text.startsWith('AAPL: 106.00 USD.'));
+ assert.match(sent[0].card.text,/Nvidia \(\$NVDA\): 106.00 USD.*We're back/);
+ assert.match(sent[1].card.text,/\(\$AAPL\): 106.00 USD/);
  const demo=[];
  await createHandler({provider:{lookup:async()=>({...base,fixture:true})},send:async p=>demo.push(p),now:()=>now})({channel:'C123',ts:'123.5',text:'onko $NVDA takaisin?'});
- assert.match(demo[0].card.text,/^NVDA: Mood unavailable/);assert.match(demo[0].card.text,/DEMO/);
+ assert.doesNotMatch(demo[0].card.text,/Mood unavailable/);assert.match(demo[0].card.text,/DEMO/);
 });
 
 test('mood phrase must end the question, not introduce a price or other continuation',async()=>{
@@ -58,7 +60,7 @@ test('mood phrase must end the question, not introduce a price or other continua
   const sent=[];
   await createHandler({provider:{lookup:async symbol=>({...base,symbol})},send:async p=>sent.push(p),now:()=>now})({channel:'C123',ts:'123.4',text});
   assert.equal(sent.length,1);
-  assert.match(sent[0].card.text,/^[A-Z]+: 106.00 USD\./);
+  assert.match(sent[0].card.text,/\(\$[A-Z]+\): 106.00 USD\./);
  }
  for(const text of ['is $NVDA back to normal? is $AAPL over 100?','is $NVDA over-priced?','is $NVDA back/above 100?']) assert.deepEqual(moodQuestionTickers(text),[],text);
  assert.deepEqual(moodQuestionTickers('is $NVDA back?!  '),['NVDA']);

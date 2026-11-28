@@ -18,9 +18,9 @@ test('mixed real handler keeps quote and history sources distinct and generates 
  const history=new AlphaVantageProvider({...options,stateDir:join(root,'alpha'),fetchImpl:async()=>({ok:true,json:async()=>alpha})});
  const provider=new QuoteWithDailyHistory(quote,history);const sent=[];
  await createHandler({provider,now:()=>now,send:async p=>sent.push(p)})({channel:'C123',ts:'123.4',text:'$AAPL'});
- assert.equal(sent.length,1);assert.match(sent[0].card.text,/260.00 USD.*REAL-TIME US/);
- assert.match(JSON.stringify(sent[0].card),/DAILY CLOSE HISTORY \(not live\/intraday\).*Alpha Vantage/);
- assert.equal(sent[0].chartTitle,'AAPL Alpha Vantage daily closes, not live');
+ assert.equal(sent.length,1);assert.match(sent[0].card.text,/260.00 USD.*updated just now/);
+ assert.doesNotMatch(JSON.stringify(sent[0].card),/DAILY CLOSE HISTORY/);
+ assert.equal(sent[0].chartTitle,'AAPL Alpha Vantage daily closes, not live; quote: Finnhub');
  const result=await provider.lookup('AAPL');assert.equal(result.history.at(-1).close,250.12);assert.notEqual(result.history.at(-1).close,result.price);
  assert.ok(sent[0].png.length>1000);await writeFile(join(root,'mixed-chart.png'),sent[0].png);
  // A state directory from the other provider must fail closed, not reuse cache.
@@ -31,7 +31,7 @@ test('history failure, wrong symbol or currency produces quote only and honest n
  for(const daily of [null,{...quote,priceKind:'daily-close',symbol:'SPY'},{...quote,priceKind:'daily-close',currency:'EUR'}]){
   const provider=new QuoteWithDailyHistory({lookup:async()=>quote},{lookup:async()=>daily});
   const sent=[];await createHandler({provider,now:()=>now,send:async p=>sent.push(p)})({channel:'C123',ts:'123.4',text:'$AAPL'});
-  assert.equal(sent.length,1);assert.equal(sent[0].png,null);assert.match(JSON.stringify(sent[0].card),/Daily history unavailable/);
+  assert.equal(sent.length,1);assert.equal(sent[0].png,null);assert.doesNotMatch(JSON.stringify(sent[0].card),/Daily history unavailable/);
  }
 });
 test('configuration enforces provider-specific child directories and US currency identity',()=>{
@@ -49,8 +49,8 @@ test('rolling mood survives provider composition and real handler configuration'
  const provider=new QuoteWithDailyHistory({lookup:async()=>q},{lookup:async()=>daily});
  for(const multiplier of [2,3]) {
   const sent=[];await createHandler({provider,now:()=>time,mood:{multiplier},send:async p=>sent.push(p)})({channel:'C123',ts:'123.4',text:'$AAPL'});
-  assert.match(sent[0].card.text,multiplier===2?/We're back/:/No mood trigger/);
-  assert.match(sent[0].card.text,/Session move \+2.50%.*baseline source: Alpha Vantage/);
+  assert.match(sent[0].card.text,multiplier===2?/We're back/:/updated just now/);
+  assert.doesNotMatch(sent[0].card.text,/baseline source:/);
   assert.equal((await provider.lookup('AAPL')).history.at(-1).close,history.at(-1).close);
  }
 });
