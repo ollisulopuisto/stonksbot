@@ -1,3 +1,4 @@
+import { helsinkiDate, helsinkiRegularSession } from './helsinki-session.js';
 const DAY = 86400000;
 export const oldDailyDate = (date, now) => Date.parse(new Date(now).toISOString().slice(0,10)) - Date.parse(date.slice(0,10)) > 5 * DAY;
 const defaults = { window: 7, multiplier: 3, fallbackPercent: 5 };
@@ -25,12 +26,15 @@ export function evaluateMood(quote, now = Date.now(), options = {}) {
   const settings = checked(options);
   const timestamp = Date.parse(quote.asOf);
   const daily = quote.priceKind === 'daily-close';
-  if (!['us-quote', 'daily-close'].includes(quote.priceKind) || !Number.isFinite(timestamp) ||
-      timestamp > now + 60000 || now - timestamp > (daily ? Infinity : 15 * 60000))
+  const delayed = quote.priceKind === 'delayed-quote';
+  if (delayed && (!helsinkiRegularSession(now) || quote.historySource !== quote.source || quote.exchange !== 'XHEL' || quote.currency !== 'EUR' || quote.moodUnavailable)) return unavailable(quote.moodUnavailable || 'Unverified Helsinki identity');
+  if (!['us-quote', 'daily-close', 'delayed-quote'].includes(quote.priceKind) || !Number.isFinite(timestamp) ||
+      timestamp > now + 60000 || now - timestamp > (daily ? Infinity : (delayed ? 65 : 15) * 60000))
     return unavailable('No fresh session move');
-  const targetDate = daily ? quote.asOf.slice(0, 10) : usSession(timestamp);
-  const currentDate = daily ? new Date(now).toISOString().slice(0,10) : usSession(now);
+  const targetDate = daily ? quote.asOf.slice(0, 10) : (delayed ? helsinkiDate(timestamp) : usSession(timestamp));
+  const currentDate = daily ? new Date(now).toISOString().slice(0,10) : (delayed ? helsinkiDate(now) : usSession(now));
   if (daily && Date.parse(currentDate) - Date.parse(targetDate) > 5 * DAY) return unavailable('No fresh session move');
+  if (delayed && (targetDate !== currentDate || ['Sat','Sun'].includes(new Intl.DateTimeFormat('en-US',{timeZone:'Europe/Helsinki',weekday:'short'}).format(now)))) return unavailable('No current Helsinki session move');
   const history = quote.history;
   if (!Array.isArray(history)) return unavailable('Invalid daily history');
   let previousDate = '';

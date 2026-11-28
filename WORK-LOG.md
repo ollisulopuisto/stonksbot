@@ -128,3 +128,53 @@ existed, then exercise success/already-member, exception/ok:false, skipped priva
 DM IDs, allowed public response and excluded-channel gate through actual handler.
 Own review traced startup order, failure isolation, scope setup and source-data
 visibility limits. No deployment or real Slack scope/join operation performed.
+
+
+## 2026-11-28, EODHD Helsinki provider
+
+Owner selected EODHD following European-provider research. Checked main, all
+recent/open PRs and branches: no existing Helsinki implementation or overlap.
+Added optional separate provider and .HE router, preserving Finnhub US defaults.
+Exchange catalog XHEL/EUR plus exact HE/EUR symbol validation precedes quotes.
+Metadata, quote and raw history calls share persistent rolling20/day and20/min
+limits including failures, no retries,429/402day pause, cache and process lock.
+No signup/key/live calls, purchase, merge or deployment. API key env-only.
+
+Own adversarial review traced configuration -> router -> catalog -> request/
+quota/cache/restart -> quote validation -> daily history -> mood -> card summary/
+blocks -> chart pixel labels -> Slack title. Found and fixed hardcoded Alpha
+chart branding, normal delayed data incorrectly using US15min freshness, and
+cross-feed/session/corporate-action baseline risks. Both configured endpoints
+and per-symbol caches remain source/identity checked. Adjusted/raw ratio changes
+and previousClose disagreement suppress mood, never combine cross-feed prices.
+
+New tests failed before module existed, then cover actual handler output,
+metadata/currency/symbol rejection, cached restart, concurrency, quota exhaustion,
+failed requests and daily/minute limits,429pause, malformed/future quotes,
+history failure, Helsinki date rollover and independent-source rejection.
+Known limits: no real entitlement verification, official calendar/hours or full
+corporate-action engine. Hourly quote cache conserves the very small free budget;
+source timestamps can be stale, clearly labelled, never changed. Free rights
+for public/shared Slack are not assumed. No state deletion/quota bypass.
+
+Final local gate:97tests pass, npm audit0vulnerabilities, offline demo and
+whitespace checks pass. Inspected actual synthetic NOKIA.HE640x320PNG pixels:
+EODHD DAILY title, EUR axis/range and dates are readable and not Alpha-branded.
+Added standard Ubuntu Node22test workflow on public repo (no artifacts/paid
+runners); exact PR head CI must be checked separately.
+
+First remote CI exposed an existing test hardcoded to /downloads. Made its
+chart scratch path use the test's temporary directory; no runtime behavior
+change. Re-ran full local suite before updating PR head.
+
+Independent review found hourly caching could retain a normally delayed quote
+past the65min source-age threshold during market hours. Added failing-first
+actual lookup test, then on-demand source-age refresh only in regular Helsinki
+weekday10:00-18:30hours. Outside hours, existing metadata/history/quote cache
+spends no calls, card says outside regular hours instead of spurious stale and
+mood stays unavailable. Extracted timezone session helper, official Nasdaq hours
+source recorded. No holiday/half-day calendar, explicitly documented.98tests pass.
+
+Second review: indefinite closed-market cache could hide ancient data. Added
+failing-first22day-old cache test and OLD DATA after3elapsed days, even outside
+hours; no extra calls. Documented uncached after-hours initial4call cost.
