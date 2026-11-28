@@ -112,7 +112,7 @@ export function createHandler({ provider, send, now = Date.now, onError = () => 
         const card = buildCard(quote, now(), mood, questions.has(symbol));
         const chart=chartForRange(quote,range,now());
         if(chart.notice){card.text+=' · '+chart.notice;card.blocks.push({type:'context',elements:[{type:'plain_text',text:chart.notice}]});}
-        await send({ channel: event.channel, ...(replyMode === 'thread' ? { thread_ts: /^\d+\.\d+$/.test(event.thread_ts ?? '') ? event.thread_ts : event.ts } : {}), symbol, card, chartTitle: range+' · '+(quote.historyKind === 'daily-close' ? `${symbol} ${quote.priceKind === 'delayed-quote' ? 'EODHD' : 'Alpha Vantage'} daily closes, not live${quote.priceKind === 'us-quote' ? '; quote: Finnhub' : ''}` : quote.fixture ? `${symbol} DEMO fixture history` : `${symbol} daily close history`), png: chart.points.length >= 2 ? chartPng(chart.points,640,320,{ ...quote, range, historyKind: quote.historyKind }) : null });
+        await send({ channel: event.channel, ...(replyMode === 'thread' ? { thread_ts: /^\d+\.\d+$/.test(event.thread_ts ?? '') ? event.thread_ts : event.ts } : {}), symbol, card, chartTitle: (chart.label??range)+' · '+(quote.historyKind === 'daily-close' ? `${symbol} ${quote.priceKind === 'delayed-quote' ? 'EODHD' : 'Alpha Vantage'} daily closes, not live${quote.priceKind === 'us-quote' ? '; quote: Finnhub' : ''}` : quote.fixture ? `${symbol} DEMO fixture history` : `${symbol} daily close history`), png: chart.points.length >= 2 ? chartPng(chart.points,640,320,{ ...quote, range:chart.label??range, historyKind: quote.historyKind }) : null });
         delivered.set(symbolKey, now() + 10 * 60_000);
       }
       delivered.set(key, now() + 10 * 60_000);

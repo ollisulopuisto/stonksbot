@@ -78,7 +78,7 @@ export class EodhdProvider {
    state.quotes[symbol]={at:now,quote};await save();
   }
   try{
-   const historyKey=symbol+':'+range;
+   const historyKey=symbol+':'+(range==='7d'?'30d':range);
    let daily=Object.hasOwn(state.histories,historyKey)&&state.histories[historyKey];
    // A new Helsinki trading date invalidates yesterday's cached history.
    if(!daily||(!retainClosed&&(!fresh(daily,now,DAY)||helsinkiDate(daily.at)!==helsinkiDate(now)))){

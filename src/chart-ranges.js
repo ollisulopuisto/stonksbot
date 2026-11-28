@@ -18,5 +18,7 @@ export function chartForRange(quote,range,now) {
  if(!quote.history.length)return {points:[],notice:`${range} chart unavailable: daily history is not available from this provider or quota.`};
  if(['3m','1y'].includes(range)&&Date.parse(quote.history[0].date)-Date.parse(rangeStart(range,now))>7*86400000)return {points:[],notice:`${range} chart unavailable: returned history does not cover the period (new listing or incomplete source).`};
  const points=quote.history.filter(p=>p.date>=rangeStart(range,now));
- return points.length>=2?{points,notice:null}:{points:[],notice:`${range} chart unavailable: fewer than two daily closes in this period.`};
+ const partial=['7d','30d'].includes(range)&&points.length>=2&&Date.parse(points[0].date)-Date.parse(rangeStart(range,now))>3*86400000;
+ const label=partial?`${range} (partial: ${points[0].date} to ${points.at(-1).date})`:range;
+ return points.length>=2?{points,label,notice:partial?`${range} chart has shorter history: ${points[0].date} to ${points.at(-1).date} (new listing or incomplete source).`:null}:{points:[],notice:`${range} chart unavailable: fewer than two daily closes in this period.`};
 }

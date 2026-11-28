@@ -352,3 +352,9 @@ chart labels. Recent8adjustment ratios only for mood guard, chart span cannot
 introduce old-split verdict changes. No provider quota increase, paid full history,
 real keys/live calls, Slack/deploy/merge.136tests/audit/demo/diff pass, reviewer
 and new owner yes needed. No chart redesign bundled.
+
+Reviewer follow-ups:7d/30dshare EODHD :30dcache and40day baseline fetch. Failing
+regression verified extra7dcall and short3day series mislabeled before fix. New
+listing/incomplete7d/30dactual first date>3days after requestedstart is marked
+partial with actual coverage in PNG/title/card, without claiming new-listing
+cause as fact. Long-range coverage refusal unchanged. Local144tests green.

@@ -19,3 +19,6 @@ test('insufficientrange evidence never pretendsshort cache is1y',()=>{
  const he={...q,symbol:'REMEDY.HE',currency:'EUR',exchange:'XHEL',priceKind:'delayed-quote',historyFrom:'2026-10-01'};
  assert.match(chartForRange(he,'1y',now).notice,/coverage|range/i);
 });
+test('short new-listing history has partial label and actual date coverage',async()=>{
+ const short={...q,history:history.slice(-3)};for(const range of ['7d','30d']){const c=chartForRange(short,range,now);assert.match(c.notice,/partial|shorter/i);assert.match(c.label,/partial/);const sent=[];await createHandler({provider:{lookup:async()=>short},now:()=>now,send:async p=>sent.push(p)})({channel:'C1',ts:'11.'+range.length,text:'$AAPL '+range});assert.match(sent[0].chartTitle,/partial/);assert.match(sent[0].card.text,/shorter|partial/);}
+});
